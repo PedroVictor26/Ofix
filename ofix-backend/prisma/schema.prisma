@@ -1,0 +1,281 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Autenticação e Usuários
+model User {
+  id        String   @id @default(uuid())
+  nome      String
+  email     String   @unique
+  password  String // Hash da senha
+  role      UserRole @default(USER) // Papel do usuário (admin, user, etc.)
+  oficinaId String?  // Opcional se um usuário pode não estar ligado a uma oficina inicialmente
+  oficina   Oficina? @relation(fields: [oficinaId], references: [id])
+  servicos  Servico[] // Serviços pelos quais este usuário é responsável
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  ADMIN
+  GESTOR_OFICINA
+  MECANICO
+  USER // Papel genérico, ajustar conforme necessidade
+}
+
+model Oficina {
+  id        String   @id @default(uuid())
+  nome      String
+  cnpj      String?  @unique
+  telefone  String?
+  endereco  String?
+  // Outros dados da oficina
+
+  users     User[]
+  clientes  Cliente[]
+  veiculos  Veiculo[] // Veículos associados diretamente à oficina (se aplicável) ou via Cliente
+  servicos  Servico[]
+  pecas     Peca[]
+  fornecedores Fornecedor[]
+  procedimentosPadrao ProcedimentoPadrao[]
+  mensagensPadrao   MensagemPadrao[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Clientes e Veículos
+model Cliente {
+  id            String    @id @default(uuid())
+  nomeCompleto  String
+  cpfCnpj       String?   @unique
+  telefone      String?
+  email         String?   @unique
+  endereco      String?
+  // Outros dados do cliente
+
+  oficinaId     String
+  oficina       Oficina   @relation(fields: [oficinaId], references: [id])
+
+  veiculos      Veiculo[]
+  servicos      Servico[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Veiculo {
+  id            String    @id @default(uuid())
+  placa         String    @unique // Geralmente única
+  marca         String
+  modelo        String
+  anoFabricacao Int?
+  anoModelo     Int?
+  cor           String?
+  chassi        String?   @unique
+  kmAtual       Int?
+  // Outras informações do veículo
+
+  clienteId     String
+  cliente       Cliente   @relation(fields: [clienteId], references: [id])
+
+  oficinaId     String?   // Denormalização para facilitar queries se necessário, ou buscar via cliente.oficinaId
+  oficina       Oficina?  @relation(fields: [oficinaId], references: [id])
+
+  servicos      Servico[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Serviços
+model Servico {
+  id                  String   @id @default(uuid())
+  numeroOs            String   @unique // Número da Ordem de Serviço, pode ser gerado
+  status              StatusServico @default(AGUARDANDO)
+  descricaoProblema   String?
+  descricaoSolucao    String?
+  dataEntrada         DateTime @default(now())
+  dataPrevisaoEntrega DateTime?
+  dataConclusao       DateTime?
+  dataEntregaCliente  DateTime?
+  valorTotalEstimado  Decimal? @db.Decimal(10, 2)
+  valorTotalServicos  Decimal? @db.Decimal(10, 2) // Mão de obra
+  valorTotalPecas     Decimal? @db.Decimal(10, 2)
+  valorTotalFinal     Decimal? @db.Decimal(10, 2)
+  kmEntrada           Int?
+  // Checklist (pode ser um JSON ou um modelo separado se muito complexo)
+  checklist           Json? // Ex: { "item1": true, "item2": false }
+  observacoes         String?
+
+  clienteId           String
+  cliente             Cliente  @relation(fields: [clienteId], references: [id])
+
+  veiculoId           String
+  veiculo             Veiculo  @relation(fields: [veiculoId], references: [id])
+
+  responsavelId       String?   // ID do User (mecânico) responsável
+  responsavel         User?     @relation(fields: [responsavelId], references: [id])
+
+  oficinaId           String
+  oficina             Oficina  @relation(fields: [oficinaId], references: [id])
+
+  itensPeca           ItemServicoPeca[]
+  procedimentos       ProcedimentoPadraoServico[]
+  mensagens           MensagemServico[]
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+enum StatusServico {
+  AGUARDANDO
+  EM_ANDAMENTO
+  AGUARDANDO_PECAS
+  AGUARDANDO_APROVACAO
+  CONCLUIDO_MECANICA
+  AGUARDANDO_PAGAMENTO
+  FINALIZADO // Entregue e pago
+  CANCELADO
+}
+
+// Peças e Fornecedores
+model Peca {
+  id              String   @id @default(uuid())
+  codigoInterno   String?  @unique // SKU interno
+  codigoFabricante String?
+  nome            String
+  descricao       String?
+  fabricante      String?
+  unidadeMedida   String   @default("UN") // UN, MT, LT, KG
+  precoCusto      Decimal? @db.Decimal(10, 2)
+  precoVenda      Decimal  @db.Decimal(10, 2)
+  estoqueAtual    Int      @default(0)
+  estoqueMinimo   Int?     @default(0)
+  localizacao     String?  // Ex: Prateleira A, Gaveta 3
+
+  oficinaId       String
+  oficina         Oficina  @relation(fields: [oficinaId], references: [id])
+
+  fornecedorId    String?
+  fornecedor      Fornecedor? @relation(fields: [fornecedorId], references: [id])
+
+  servicos        ItemServicoPeca[] // Relação com serviços através da tabela pivot
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Fornecedor {
+  id          String   @id @default(uuid())
+  nome        String
+  cnpjCpf     String?  @unique
+  telefone    String?
+  email       String?  @unique
+  endereco    String?
+  // Outros dados
+
+  oficinaId   String
+  oficina     Oficina  @relation(fields: [oficinaId], references: [id])
+
+  pecas       Peca[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Tabela Pivot para Peças em um Serviço (Many-to-Many com atributos)
+model ItemServicoPeca {
+  id          String  @id @default(uuid())
+  servicoId   String
+  servico     Servico @relation(fields: [servicoId], references: [id])
+
+  pecaId      String
+  peca        Peca    @relation(fields: [pecaId], references: [id])
+
+  quantidade  Int
+  precoUnitarioCobrado Decimal @db.Decimal(10, 2) // Preço no momento da venda/uso
+  valorTotal  Decimal @db.Decimal(10, 2) // quantidade * precoUnitarioCobrado
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([servicoId, pecaId]) // Garante que uma peça só apareça uma vez por serviço
+}
+
+
+// Procedimentos Padrão
+model ProcedimentoPadrao {
+  id              String   @id @default(uuid())
+  codigo          String?  @unique
+  nome            String
+  descricao       String?
+  tempoEstimadoHoras Decimal? // Em horas, ex: 1.5 para 1h30min
+  // Checklist de subtarefas (pode ser JSON ou modelo separado)
+  checklistJson   Json?    // Ex: [{ "descricao": "Verificar item X", "concluido": false }]
+
+  oficinaId       String
+  oficina         Oficina  @relation(fields: [oficinaId], references: [id])
+
+  servicos        ProcedimentoPadraoServico[] // Relação com serviços
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Tabela Pivot para Procedimentos em um Serviço
+model ProcedimentoPadraoServico {
+  id                  String    @id @default(uuid())
+  servicoId           String
+  servico             Servico   @relation(fields: [servicoId], references: [id])
+
+  procedimentoPadraoId String
+  procedimentoPadrao  ProcedimentoPadrao @relation(fields: [procedimentoPadraoId], references: [id])
+
+  observacoes         String?
+  concluido           Boolean   @default(false)
+  dataConclusao       DateTime?
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@unique([servicoId, procedimentoPadraoId])
+}
+
+// Mensagens Padrão e Histórico de Mensagens
+model MensagemPadrao {
+  id          String   @id @default(uuid())
+  codigo      String?  @unique
+  nome        String   // Ex: "Aviso de Serviço Concluído"
+  template    String   // Ex: "Olá {cliente}, seu veículo {veiculo_modelo} placa {veiculo_placa} está pronto!"
+  // Placeholders disponíveis: {cliente_nome}, {veiculo_modelo}, {veiculo_placa}, {servico_os}, {servico_status}
+
+  oficinaId   String
+  oficina     Oficina  @relation(fields: [oficinaId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model MensagemServico { // Histórico de mensagens enviadas para um serviço
+  id          String    @id @default(uuid())
+  servicoId   String
+  servico     Servico   @relation(fields: [servicoId], references: [id])
+
+  conteudo    String    // Conteúdo final da mensagem enviada
+  tipoEnvio   String    // Ex: "whatsapp", "email", "sms" (informativo)
+  dataEnvio   DateTime  @default(now())
+  enviadoPor  String?   // Nome ou ID do usuário que enviou
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
