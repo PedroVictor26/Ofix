@@ -10,9 +10,11 @@ import {
     X,
     Wrench,
     Bell,
-    Search
+    Search,
+    LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "./context/AuthContext.jsx"; // Import useAuth
 import { Input } from "@/components/ui/input";
 import {
     Sidebar,
@@ -65,8 +67,9 @@ const navigationItems = [
 
 export default function Layout() {
     const location = useLocation();
+    const { user, logout, isAuthenticated, isLoadingAuth } = useAuth(); // Use o hook useAuth
     const [searchTerm, setSearchTerm] = useState("");
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    // const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Parece não estar sendo usado
 
     // Função para filtrar itens de navegação baseado na busca
     const filteredNavigationItems = navigationItems.filter(item =>
@@ -272,20 +275,40 @@ export default function Layout() {
                         <div className="flex items-center gap-3 p-3 bg-white rounded-xl shadow-sm border border-slate-100">
                             <div className="relative">
                                 <div className="w-10 h-10 bg-gradient-to-br from-slate-600 to-slate-700 rounded-full flex items-center justify-center shadow-md">
-                                    <span className="text-white font-semibold text-sm">U</span>
+                                    {/* Exibe a inicial do nome do usuário ou 'U' como fallback */}
+                                    <span className="text-white font-semibold text-sm">
+                                        {user?.nome ? user.nome.charAt(0).toUpperCase() : 'U'}
+                                    </span>
                                 </div>
-                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                                <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${isAuthenticated ? 'bg-green-500' : 'bg-slate-400'}`}></div>
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-slate-900 text-sm truncate">Usuário Sistema</p>
-                                <p className="text-xs text-slate-500 truncate">Administrador</p>
+                                <p className="font-semibold text-slate-900 text-sm truncate">
+                                    {isLoadingAuth ? "Carregando..." : (isAuthenticated && user?.nome ? user.nome : "Visitante")}
+                                </p>
+                                <p className="text-xs text-slate-500 truncate">
+                                    {isAuthenticated && user?.role ? user.role.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) : "Não autenticado"}
+                                </p>
                             </div>
+                            {isAuthenticated && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={logout}
+                                    className="text-slate-500 hover:text-red-600 hover:bg-red-100 rounded-lg transition-all duration-200"
+                                    title="Sair"
+                                >
+                                    <LogOut className="w-5 h-5" />
+                                </Button>
+                            )}
+                            {/* O botão de sino pode ser mantido ou removido se não houver funcionalidade de notificação */}
                             <Button 
                                 variant="ghost" 
-                                size="sm" 
+                                size="icon"
                                 className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all duration-200"
+                                title="Notificações"
                             >
-                                <Bell className="w-4 h-4" />
+                                <Bell className="w-5 h-5" />
                             </Button>
                         </div>
                     </SidebarFooter>

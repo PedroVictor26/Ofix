@@ -5,12 +5,15 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+// Button não parece ser usado diretamente aqui, mas pode estar nos subcomponentes
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Servico, ProcedimentoPadrao, MensagemPadrao, Peca } from "../../entities/mock-data";
-import { Wrench, MessageCircle, Package, FileText, Save } from "lucide-react";
-import toast from 'react-hot-toast'; // Import toast
+// Mock data não será mais usado para update, usaremos o service
+import * as servicosService from '../../services/servicos.service.js'; // Importar o service
+// Manter mocks para ProcedimentoPadrao, MensagemPadrao, Peca por enquanto
+import { ProcedimentoPadrao, MensagemPadrao, Peca } from "../../entities/mock-data";
+import { Wrench, MessageCircle, Package, FileText } from "lucide-react"; // Save pode não ser necessário aqui se for por subcomponente
+import toast from 'react-hot-toast';
 
 import ServiceDetails from './ServiceDetails';
 import ServiceProcedures from './ServiceProcedures';
@@ -48,15 +51,28 @@ export default function ServiceModal({ isOpen, onClose, service, onUpdate, clien
         setIsLoading(false);
     };
 
+    // onUpdate agora é reloadDashboard
     const handleServiceUpdate = async (updatedData) => {
-        const toastId = toast.loading("Salvando alterações...");
+        if (!service || !service.id) {
+            toast.error("ID do serviço não encontrado para atualização.");
+            return;
+        }
+        const toastId = toast.loading("Salvando alterações do serviço...");
         try {
-            await Servico.update(service.id, updatedData); // Simula chamada à API
+            // Prepara os dados para enviar, garantindo que campos numéricos e datas estejam corretos
+            // Os subcomponentes (ServiceDetails, etc.) devem fornecer `updatedData` já formatado.
+            // Exemplo: se updatedData vier com `dataEntrada` como string, converter para Date.
+            // No entanto, o backend Prisma espera strings ISO para datas, então pode não ser necessário converter aqui
+            // se o formulário já estiver enviando strings no formato correto.
+            // Por segurança, pode-se fazer uma normalização aqui ou garantir nos subcomponentes.
+
+            await servicosService.updateServico(service.id, updatedData);
             toast.success("Serviço atualizado com sucesso!", { id: toastId });
-            onUpdate(); // Chama a função passada por props para fechar modal e recarregar dados no Dashboard
+            onUpdate(); // Chama a função reloadDashboard passada por props
+            // onClose(); // Fechar o modal também, se onUpdate não o fizer. Geralmente onUpdate (reload) é suficiente e o modal fecha.
         } catch (error) {
             console.error("Erro ao atualizar serviço:", error);
-            toast.error("Falha ao atualizar serviço. Tente novamente.", { id: toastId });
+            toast.error(error.message || "Falha ao atualizar serviço.", { id: toastId });
         }
     };
 
