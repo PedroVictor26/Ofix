@@ -1,6 +1,7 @@
-import app from './app';
-import 'dotenv/config'; // Carrega variáveis de ambiente do .env
-
+import app from './app.js';
+// import 'dotenv/config'; // Carrega variáveis de ambiente do .env
+import dotenv from 'dotenv';
+dotenv.config();
 const port = process.env.PORT || 3333;
 
 app.listen(port, () => {

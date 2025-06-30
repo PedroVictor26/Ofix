@@ -1,45 +1,51 @@
+// src/components/dashboard/NewServiceModal.jsx
+
 import React, { useState } from 'react';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-// Servico (mock) não é mais usado diretamente para criação, usaremos o service
-import * as servicosService from '../../services/servicos.service.js'; // Importar o service
+import * as servicosService from '../../services/servicos.service.js';
 import { Save, Plus } from "lucide-react";
 import toast from 'react-hot-toast';
 
-// onSuccess agora será a função reload do useDashboardData
-export default function NewServiceModal({ isOpen, onClose, onSuccess: reloadDashboard, clientes, veiculos }) {
-    const initialFormData = {
-        numeroOs: '', // Backend espera numeroOs
-        clienteId: '', // Backend espera clienteId
-        veiculoId: '', // Backend espera veiculoId
-        descricaoProblema: '', // Backend espera descricaoProblema
-        dataEntrada: new Date().toISOString().split('T')[0],
-        // Adicionar outros campos que o backend espera, conforme schema.prisma
-        // status: 'AGUARDANDO', // O backend pode definir um status padrão
-        // responsavelId: null, // Pode ser definido depois
-    };
-    const [formData, setFormData] = useState(initialFormData);
-        veiculo_id: '',
-        descricao_problema: '',
-        data_entrada: new Date().toISOString().split('T')[0],
-        data_previsao: '',
-        valor_mao_obra: 0
-    });
+// Objeto com os dados iniciais do formulário. Definido fora do componente.
+const initialFormData = {
+    numeroOs: '',
+    clienteId: '',
+    veiculoId: '',
+    descricaoProblema: '',
+    dataEntrada: new Date().toISOString().split('T')[0],
+    kmEntrada: '',
+    valorTotalEstimado: '',
+};
 
+export default function NewServiceModal({ isOpen, onClose, onSuccess: reloadDashboard, clientes, veiculos }) {
+    
+    // CORREÇÃO: Inicializa o estado com a constante definida acima.
+    const [formData, setFormData] = useState(initialFormData);
     const [isCreating, setIsCreating] = useState(false);
+
+    // FUNÇÃO FALTANTE: Lida com a mudança de valores nos inputs.
+    const handleChange = (e) => {
+        const { id, value } = e.target;
+        setFormData(prevData => ({
+            ...prevData,
+            [id]: value,
+        }));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        // Ajustar nomes dos campos para o que o backend espera
+        
         if (!formData.numeroOs || !formData.clienteId || !formData.veiculoId) {
             toast.error("Preencha os campos obrigatórios: Número da OS, Cliente e Veículo.");
             return;
@@ -49,31 +55,34 @@ export default function NewServiceModal({ isOpen, onClose, onSuccess: reloadDash
         const toastId = toast.loading("Criando nova ordem de serviço...");
 
         try {
-            // Prepara os dados para enviar, garantindo que campos numéricos sejam números
             const dataToSend = {
                 ...formData,
-                kmEntrada: formData.kmEntrada ? parseInt(formData.kmEntrada, 10) : undefined,
-                valorTotalEstimado: formData.valorTotalEstimado ? parseFloat(formData.valorTotalEstimado) : undefined,
-                // Adicionar outros campos conforme necessário
+                // Converte campos que devem ser numéricos antes de enviar
+                clienteId: parseInt(formData.clienteId, 10),
+                veiculoId: parseInt(formData.veiculoId, 10),
+                kmEntrada: formData.kmEntrada ? parseInt(formData.kmEntrada, 10) : null,
+                valorTotalEstimado: formData.valorTotalEstimado ? parseFloat(formData.valorTotalEstimado) : null,
             };
 
             await servicosService.createServico(dataToSend);
             toast.success("Ordem de Serviço criada com sucesso!", { id: toastId });
-            setFormData(initialFormData); // Reset form
+            
+            setFormData(initialFormData); // Reseta o formulário para o estado inicial
             reloadDashboard(); // Recarrega os dados do dashboard
             onClose(); // Fecha o modal
         } catch (error) {
             console.error("Erro ao criar serviço:", error);
-            toast.error(error.message || "Falha ao criar Ordem de Serviço.", { id: toastId });
+            const errorMessage = error.response?.data?.message || error.message || "Falha ao criar Ordem de Serviço.";
+            toast.error(errorMessage, { id: toastId });
         } finally {
             setIsCreating(false);
         }
     };
 
-    // Clientes e Veiculos são mapas passados como props
+    // A lógica para filtrar as opções continua ótima.
     const clienteOptions = Object.values(clientes || {});
     const veiculoOptions = formData.clienteId
-        ? Object.values(veiculos || {}).filter(v => v.clienteId === formData.clienteId)
+        ? Object.values(veiculos || {}).filter(v => v.clienteId === parseInt(formData.clienteId, 10))
         : [];
 
     return (
@@ -84,9 +93,12 @@ export default function NewServiceModal({ isOpen, onClose, onSuccess: reloadDash
                         <Plus className="w-6 h-6" />
                         Nova Ordem de Serviço
                     </DialogTitle>
+                    <DialogDescription>
+                        Numero da OS
+                    </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6 pt-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="numeroOs">Número da OS *</Label>
@@ -116,8 +128,9 @@ export default function NewServiceModal({ isOpen, onClose, onSuccess: reloadDash
                             <Select
                                 value={formData.clienteId}
                                 onValueChange={(value) => setFormData({ ...formData, clienteId: value, veiculoId: '' })}
+                                required
                             >
-                                <SelectTrigger id="clienteIdSelectTrigger">
+                                <SelectTrigger>
                                     <SelectValue placeholder="Selecione o cliente" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -133,12 +146,13 @@ export default function NewServiceModal({ isOpen, onClose, onSuccess: reloadDash
                         <div>
                             <Label htmlFor="veiculoId">Veículo *</Label>
                             <Select
-                                value={formData.veiculoId} // Campo ajustado
+                                value={formData.veiculoId}
                                 onValueChange={(value) => setFormData({ ...formData, veiculoId: value })}
-                                disabled={!formData.clienteId}
+                                disabled={!formData.clienteId || veiculoOptions.length === 0}
+                                required
                             >
-                                <SelectTrigger id="veiculoIdSelectTrigger">
-                                    <SelectValue placeholder="Selecione o veículo" />
+                                <SelectTrigger>
+                                    <SelectValue placeholder={!formData.clienteId ? "Selecione um cliente primeiro" : "Selecione o veículo"} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {veiculoOptions.map((veiculo) => (
@@ -151,23 +165,21 @@ export default function NewServiceModal({ isOpen, onClose, onSuccess: reloadDash
                         </div>
                     </div>
 
-                    {/* Adicionar campos kmEntrada e valorTotalEstimado se desejar */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="kmEntrada">KM de Entrada</Label>
-                            <Input id="kmEntrada" type="number" value={formData.kmEntrada || ''} onChange={handleChange} />
+                            <Input id="kmEntrada" type="number" value={formData.kmEntrada} onChange={handleChange} />
                         </div>
                         <div>
                             <Label htmlFor="valorTotalEstimado">Valor Estimado (R$)</Label>
-                            <Input id="valorTotalEstimado" type="number" step="0.01" value={formData.valorTotalEstimado || ''} onChange={handleChange} placeholder="0.00"/>
+                            <Input id="valorTotalEstimado" type="number" step="0.01" value={formData.valorTotalEstimado} onChange={handleChange} placeholder="0.00"/>
                         </div>
                     </div>
-
 
                     <div>
                         <Label htmlFor="descricaoProblema">Descrição do Problema</Label>
                         <Textarea
-                            id="descricaoProblema" // Campo ajustado
+                            id="descricaoProblema"
                             value={formData.descricaoProblema}
                             onChange={handleChange}
                             placeholder="Descreva o problema relatado pelo cliente..."
@@ -176,7 +188,7 @@ export default function NewServiceModal({ isOpen, onClose, onSuccess: reloadDash
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4">
-                        <Button type="button" variant="outline" onClick={() => { setFormData(initialFormData); onClose();}}>
+                        <Button type="button" variant="outline" onClick={onClose}>
                             Cancelar
                         </Button>
                         <Button

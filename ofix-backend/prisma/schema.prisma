@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite" // Já está correto
   url      = env("DATABASE_URL")
 }
 
@@ -15,22 +15,18 @@ model User {
   id        String   @id @default(uuid())
   nome      String
   email     String   @unique
-  password  String // Hash da senha
-  role      UserRole @default(USER) // Papel do usuário (admin, user, etc.)
-  oficinaId String?  // Opcional se um usuário pode não estar ligado a uma oficina inicialmente
+  password  String
+  // CORREÇÃO: 'enum' não é suportado, trocado para String
+  role      String   @default("USER")
+  oficinaId String?
   oficina   Oficina? @relation(fields: [oficinaId], references: [id])
-  servicos  Servico[] // Serviços pelos quais este usuário é responsável
+  servicos  Servico[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-enum UserRole {
-  ADMIN
-  GESTOR_OFICINA
-  MECANICO
-  USER // Papel genérico, ajustar conforme necessidade
-}
+// CORREÇÃO: Bloco 'enum' removido pois não é suportado pelo SQLite
 
 model Oficina {
   id        String   @id @default(uuid())
@@ -38,11 +34,10 @@ model Oficina {
   cnpj      String?  @unique
   telefone  String?
   endereco  String?
-  // Outros dados da oficina
-
+  
   users     User[]
   clientes  Cliente[]
-  veiculos  Veiculo[] // Veículos associados diretamente à oficina (se aplicável) ou via Cliente
+  veiculos  Veiculo[]
   servicos  Servico[]
   pecas     Peca[]
   fornecedores Fornecedor[]
@@ -61,8 +56,7 @@ model Cliente {
   telefone      String?
   email         String?   @unique
   endereco      String?
-  // Outros dados do cliente
-
+  
   oficinaId     String
   oficina       Oficina   @relation(fields: [oficinaId], references: [id])
 
@@ -75,7 +69,7 @@ model Cliente {
 
 model Veiculo {
   id            String    @id @default(uuid())
-  placa         String    @unique // Geralmente única
+  placa         String    @unique
   marca         String
   modelo        String
   anoFabricacao Int?
@@ -83,12 +77,11 @@ model Veiculo {
   cor           String?
   chassi        String?   @unique
   kmAtual       Int?
-  // Outras informações do veículo
 
   clienteId     String
   cliente       Cliente   @relation(fields: [clienteId], references: [id])
 
-  oficinaId     String?   // Denormalização para facilitar queries se necessário, ou buscar via cliente.oficinaId
+  oficinaId     String?
   oficina       Oficina?  @relation(fields: [oficinaId], references: [id])
 
   servicos      Servico[]
@@ -100,21 +93,23 @@ model Veiculo {
 // Serviços
 model Servico {
   id                  String   @id @default(uuid())
-  numeroOs            String   @unique // Número da Ordem de Serviço, pode ser gerado
-  status              StatusServico @default(AGUARDANDO)
+  numeroOs            String   @unique
+  // CORREÇÃO: 'enum' não é suportado, trocado para String
+  status              String   @default("AGUARDANDO")
   descricaoProblema   String?
   descricaoSolucao    String?
   dataEntrada         DateTime @default(now())
   dataPrevisaoEntrega DateTime?
   dataConclusao       DateTime?
   dataEntregaCliente  DateTime?
-  valorTotalEstimado  Decimal? @db.Decimal(10, 2)
-  valorTotalServicos  Decimal? @db.Decimal(10, 2) // Mão de obra
-  valorTotalPecas     Decimal? @db.Decimal(10, 2)
-  valorTotalFinal     Decimal? @db.Decimal(10, 2)
+  // CORREÇÃO: 'Decimal' não é suportado, trocado para Float
+  valorTotalEstimado  Float?
+  valorTotalServicos  Float?
+  valorTotalPecas     Float?
+  valorTotalFinal     Float?
   kmEntrada           Int?
-  // Checklist (pode ser um JSON ou um modelo separado se muito complexo)
-  checklist           Json? // Ex: { "item1": true, "item2": false }
+  // CORREÇÃO: 'Json' não é suportado, trocado para String
+  checklist           String?
   observacoes         String?
 
   clienteId           String
@@ -123,7 +118,7 @@ model Servico {
   veiculoId           String
   veiculo             Veiculo  @relation(fields: [veiculoId], references: [id])
 
-  responsavelId       String?   // ID do User (mecânico) responsável
+  responsavelId       String?
   responsavel         User?     @relation(fields: [responsavelId], references: [id])
 
   oficinaId           String
@@ -137,31 +132,23 @@ model Servico {
   updatedAt           DateTime @updatedAt
 }
 
-enum StatusServico {
-  AGUARDANDO
-  EM_ANDAMENTO
-  AGUARDANDO_PECAS
-  AGUARDANDO_APROVACAO
-  CONCLUIDO_MECANICA
-  AGUARDANDO_PAGAMENTO
-  FINALIZADO // Entregue e pago
-  CANCELADO
-}
+// CORREÇÃO: Bloco 'enum' removido pois não é suportado pelo SQLite
 
 // Peças e Fornecedores
 model Peca {
   id              String   @id @default(uuid())
-  codigoInterno   String?  @unique // SKU interno
+  codigoInterno   String?  @unique
   codigoFabricante String?
   nome            String
   descricao       String?
   fabricante      String?
-  unidadeMedida   String   @default("UN") // UN, MT, LT, KG
-  precoCusto      Decimal? @db.Decimal(10, 2)
-  precoVenda      Decimal  @db.Decimal(10, 2)
+  unidadeMedida   String   @default("UN")
+  // CORREÇÃO: 'Decimal' não é suportado, trocado para Float
+  precoCusto      Float?
+  precoVenda      Float
   estoqueAtual    Int      @default(0)
   estoqueMinimo   Int?     @default(0)
-  localizacao     String?  // Ex: Prateleira A, Gaveta 3
+  localizacao     String?
 
   oficinaId       String
   oficina         Oficina  @relation(fields: [oficinaId], references: [id])
@@ -169,7 +156,7 @@ model Peca {
   fornecedorId    String?
   fornecedor      Fornecedor? @relation(fields: [fornecedorId], references: [id])
 
-  servicos        ItemServicoPeca[] // Relação com serviços através da tabela pivot
+  servicos        ItemServicoPeca[]
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -182,8 +169,7 @@ model Fornecedor {
   telefone    String?
   email       String?  @unique
   endereco    String?
-  // Outros dados
-
+  
   oficinaId   String
   oficina     Oficina  @relation(fields: [oficinaId], references: [id])
 
@@ -193,7 +179,7 @@ model Fornecedor {
   updatedAt   DateTime @updatedAt
 }
 
-// Tabela Pivot para Peças em um Serviço (Many-to-Many com atributos)
+// Tabela Pivot para Peças em um Serviço
 model ItemServicoPeca {
   id          String  @id @default(uuid())
   servicoId   String
@@ -203,33 +189,35 @@ model ItemServicoPeca {
   peca        Peca    @relation(fields: [pecaId], references: [id])
 
   quantidade  Int
-  precoUnitarioCobrado Decimal @db.Decimal(10, 2) // Preço no momento da venda/uso
-  valorTotal  Decimal @db.Decimal(10, 2) // quantidade * precoUnitarioCobrado
+  // CORREÇÃO: 'Decimal' não é suportado, trocado para Float
+  precoUnitarioCobrado Float
+  valorTotal           Float
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@unique([servicoId, pecaId]) // Garante que uma peça só apareça uma vez por serviço
+  @@unique([servicoId, pecaId])
 }
 
 
 // Procedimentos Padrão
 model ProcedimentoPadrao {
-  id              String   @id @default(uuid())
-  codigo          String?  @unique
-  nome            String
-  descricao       String?
-  tempoEstimadoHoras Decimal? // Em horas, ex: 1.5 para 1h30min
-  // Checklist de subtarefas (pode ser JSON ou modelo separado)
-  checklistJson   Json?    // Ex: [{ "descricao": "Verificar item X", "concluido": false }]
+  id                   String   @id @default(uuid())
+  codigo               String?  @unique
+  nome                 String
+  descricao            String?
+  // CORREÇÃO: 'Decimal' não é suportado, trocado para Float
+  tempoEstimadoHoras   Float?
+  // CORREÇÃO: 'Json' não é suportado, trocado para String
+  checklistJson        String?
 
-  oficinaId       String
-  oficina         Oficina  @relation(fields: [oficinaId], references: [id])
+  oficinaId            String
+  oficina              Oficina  @relation(fields: [oficinaId], references: [id])
 
-  servicos        ProcedimentoPadraoServico[] // Relação com serviços
+  servicos             ProcedimentoPadraoServico[]
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }
 
 // Tabela Pivot para Procedimentos em um Serviço
@@ -255,10 +243,9 @@ model ProcedimentoPadraoServico {
 model MensagemPadrao {
   id          String   @id @default(uuid())
   codigo      String?  @unique
-  nome        String   // Ex: "Aviso de Serviço Concluído"
-  template    String   // Ex: "Olá {cliente}, seu veículo {veiculo_modelo} placa {veiculo_placa} está pronto!"
-  // Placeholders disponíveis: {cliente_nome}, {veiculo_modelo}, {veiculo_placa}, {servico_os}, {servico_status}
-
+  nome        String
+  template    String
+  
   oficinaId   String
   oficina     Oficina  @relation(fields: [oficinaId], references: [id])
 
@@ -266,15 +253,15 @@ model MensagemPadrao {
   updatedAt   DateTime @updatedAt
 }
 
-model MensagemServico { // Histórico de mensagens enviadas para um serviço
+model MensagemServico {
   id          String    @id @default(uuid())
   servicoId   String
   servico     Servico   @relation(fields: [servicoId], references: [id])
 
-  conteudo    String    // Conteúdo final da mensagem enviada
-  tipoEnvio   String    // Ex: "whatsapp", "email", "sms" (informativo)
+  conteudo    String
+  tipoEnvio   String
   dataEnvio   DateTime  @default(now())
-  enviadoPor  String?   // Nome ou ID do usuário que enviou
+  enviadoPor  String?
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

@@ -1,11 +1,14 @@
+// src/pages/Clientes.jsx
+
 import React, { useState, useEffect } from "react";
-import { Cliente, Veiculo, Servico } from "../entities/mock-data"; // Ajuste o caminho conforme necessário
+import { Cliente, Veiculo, Servico } from "../entities/mock-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, User, Car, Phone, Mail, MapPin } from "lucide-react";
 
+// Importe os modais e componentes de detalhes
 import ClienteModal from "../components/clientes/ClienteModal";
 import VeiculoModal from "../components/clientes/VeiculoModal";
 import ClienteDetalhes from "../components/clientes/ClienteDetalhes";
@@ -29,8 +32,9 @@ export default function Clientes() {
     const loadData = async () => {
         setIsLoading(true);
         try {
+            // CORREÇÃO: Removido o parâmetro da chamada `Cliente.list`
             const [clientesData, veiculosData, servicosData] = await Promise.all([
-                Cliente.list("-created_date"),
+                Cliente.list(),
                 Veiculo.list(),
                 Servico.list()
             ]);
@@ -44,11 +48,17 @@ export default function Clientes() {
         setIsLoading(false);
     };
 
-    const filteredClientes = clientes.filter(cliente =>
-        cliente.nome_completo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        cliente.telefone?.includes(searchTerm) ||
-        cliente.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // CORREÇÃO: Filtro robusto que verifica a existência das propriedades
+    const filteredClientes = clientes.filter(cliente => {
+        const termoBusca = searchTerm.toLowerCase();
+
+        // Mapeia os campos do mock para os nomes corretos e verifica se existem
+        const nomeMatch = cliente.nome ? cliente.nome.toLowerCase().includes(termoBusca) : false;
+        const telefoneMatch = cliente.telefone ? cliente.telefone.includes(termoBusca) : false; // Telefone não precisa de toLowerCase
+        const emailMatch = cliente.email ? cliente.email.toLowerCase().includes(termoBusca) : false;
+
+        return nomeMatch || telefoneMatch || emailMatch;
+    });
 
     const handleClienteClick = (cliente) => {
         setSelectedCliente(cliente);
@@ -74,6 +84,10 @@ export default function Clientes() {
     const handleVeiculoSuccess = () => {
         loadData();
         setShowVeiculoModal(false);
+        // Se a view de detalhes estiver aberta, atualiza os dados dela também
+        if (selectedCliente) {
+            setSelectedCliente(prev => ({ ...prev })); // Truque para forçar re-renderização se necessário
+        }
     };
 
     const getClienteVeiculos = (clienteId) => {
@@ -121,16 +135,13 @@ export default function Clientes() {
                 {/* Lista de Clientes */}
                 <div className="grid gap-6">
                     {isLoading ? (
-                        Array(6).fill(0).map((_, i) => (
+                        Array(3).fill(0).map((_, i) => (
                             <Card key={i} className="animate-pulse">
-                                <CardContent className="p-6">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-16 h-16 bg-slate-200 rounded-full" />
-                                        <div className="flex-1 space-y-2">
-                                            <div className="h-4 bg-slate-200 rounded w-1/3" />
-                                            <div className="h-3 bg-slate-200 rounded w-1/4" />
-                                            <div className="h-3 bg-slate-200 rounded w-1/2" />
-                                        </div>
+                                <CardContent className="p-6 flex items-center gap-4">
+                                    <div className="w-16 h-16 bg-slate-200 rounded-full" />
+                                    <div className="flex-1 space-y-2">
+                                        <div className="h-4 bg-slate-200 rounded w-1/3" />
+                                        <div className="h-3 bg-slate-200 rounded w-full" />
                                     </div>
                                 </CardContent>
                             </Card>
@@ -154,8 +165,9 @@ export default function Clientes() {
                                                 </div>
 
                                                 <div className="flex-1">
+                                                    {/* CORREÇÃO: Usando 'cliente.nome' */}
                                                     <h3 className="text-xl font-bold text-slate-900 mb-2">
-                                                        {cliente.nome_completo}
+                                                        {cliente.nome}
                                                     </h3>
 
                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-slate-600">
@@ -165,14 +177,12 @@ export default function Clientes() {
                                                                 <span>{cliente.telefone}</span>
                                                             </div>
                                                         )}
-
                                                         {cliente.email && (
                                                             <div className="flex items-center gap-2">
                                                                 <Mail className="w-4 h-4 text-blue-500" />
                                                                 <span className="truncate">{cliente.email}</span>
                                                             </div>
                                                         )}
-
                                                         {cliente.endereco && (
                                                             <div className="flex items-center gap-2">
                                                                 <MapPin className="w-4 h-4 text-blue-500" />
@@ -193,14 +203,10 @@ export default function Clientes() {
                                                         {clienteServicos.length} serviço{clienteServicos.length !== 1 ? 's' : ''}
                                                     </Badge>
                                                 </div>
-
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleEditCliente(cliente);
-                                                    }}
+                                                    onClick={(e) => { e.stopPropagation(); handleEditCliente(cliente); }}
                                                     className="opacity-0 group-hover:opacity-100 transition-opacity"
                                                 >
                                                     Editar
@@ -222,41 +228,16 @@ export default function Clientes() {
                             <p className="text-slate-600 mb-4">
                                 {searchTerm ? 'Tente ajustar os termos de busca' : 'Comece adicionando seu primeiro cliente'}
                             </p>
-                            {!searchTerm && (
-                                <Button onClick={handleNewCliente}>
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Adicionar Cliente
-                                </Button>
-                            )}
+                            {!searchTerm && <Button onClick={handleNewCliente}><Plus className="w-4 h-4 mr-2" />Adicionar Cliente</Button>}
                         </CardContent>
                     </Card>
                 )}
             </div>
 
             {/* Modals */}
-            <ClienteModal
-                isOpen={showClienteModal}
-                onClose={() => setShowClienteModal(false)}
-                cliente={editingCliente}
-                onSuccess={handleClienteSuccess}
-            />
-
-            <VeiculoModal
-                isOpen={showVeiculoModal}
-                onClose={() => setShowVeiculoModal(false)}
-                clienteId={selectedCliente?.id}
-                onSuccess={handleVeiculoSuccess}
-            />
-
-            <ClienteDetalhes
-                isOpen={showDetalhes}
-                onClose={() => setShowDetalhes(false)}
-                cliente={selectedCliente}
-                veiculos={selectedCliente ? getClienteVeiculos(selectedCliente.id) : []}
-                servicos={selectedCliente ? getClienteServicos(selectedCliente.id) : []}
-                onEditCliente={handleEditCliente}
-                onAddVeiculo={() => setShowVeiculoModal(true)}
-            />
+            <ClienteModal isOpen={showClienteModal} onClose={() => setShowClienteModal(false)} cliente={editingCliente} onSuccess={handleClienteSuccess} />
+            <VeiculoModal isOpen={showVeiculoModal} onClose={() => setShowVeiculoModal(false)} clienteId={selectedCliente?.id} onSuccess={handleVeiculoSuccess} />
+            <ClienteDetalhes isOpen={showDetalhes} onClose={() => setShowDetalhes(false)} cliente={selectedCliente} veiculos={selectedCliente ? getClienteVeiculos(selectedCliente.id) : []} servicos={selectedCliente ? getClienteServicos(selectedCliente.id) : []} onEditCliente={handleEditCliente} onAddVeiculo={() => setShowVeiculoModal(true)} />
         </div>
     );
 }

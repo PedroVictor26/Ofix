@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
-import routes from './routes'; // Será criado a seguir
+import routes from './routes/index.js'; // Será criado a seguir
 
 class Application {
   constructor() {
