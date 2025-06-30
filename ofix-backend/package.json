@@ -1,0 +1,29 @@
+{
+  "name": "ofix-backend",
+  "version": "1.0.0",
+  "description": "Backend para o sistema OFIX",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
+  },
+  "keywords": ["oficina", "gestao", "api", "express", "prisma"],
+  "author": "Seu Nome/Equipe OFIX",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "pg": "^8.8.0",
+    "@prisma/client": "^5.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20",
+    "prisma": "^5.0.0",
+    "sucrase": "^3.29.0"
+  }
+}
