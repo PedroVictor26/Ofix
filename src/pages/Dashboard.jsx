@@ -1,7 +1,10 @@
-import React, { useState, useMemo, useEffect } from "react"; // Import useMemo, useEffect
-import { Plus, Wrench } from "lucide-react";
+import React, { useState, useMemo, useEffect } from "react";
+import { Plus, Wrench, AlertCircle, RefreshCw } from "lucide-react"; // Adicionado AlertCircle, RefreshCw
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton"; // Adicionado Skeleton
+import toast from 'react-hot-toast'; // Adicionado toast se não estiver
+import * as servicosService from '../services/servicos.service.js'; // Adicionado se não estiver
 
 import useDashboardData from "@/hooks/useDashboardData";
 import { statusConfig } from "@/constants/statusConfig";
@@ -25,11 +28,13 @@ export default function Dashboard() {
         servicos: initialServicos, // Renomeado para evitar conflito de nomes
         clientes,
         veiculos,
-        isLoading: dataIsLoading, // Renomeado para evitar conflito com possível estado de loading do D&D
+        isLoading: dataIsLoading,
+        error: dataError, // Novo estado de erro do hook
         reload
     } = useDashboardData();
 
     const [localServicos, setLocalServicos] = useState([]);
+    const [activeDraggedItem, setActiveDraggedItem] = useState(null); // Para o overlay do drag
     const [selectedService, setSelectedService] = useState(null);
     const [showServiceModal, setShowServiceModal] = useState(false);
     const [showNewServiceModal, setShowNewServiceModal] = useState(false);
@@ -66,42 +71,54 @@ export default function Dashboard() {
         })
     );
 
-    const handleDragEnd = (event) => {
+    const handleDragStart = (event) => {
+        const { active } = event;
+        const servico = localServicos.find(s => s.id === active.id);
+        if (servico) {
+            const cliente = clientes[servico.cliente_id];
+            const veiculo = veiculos[servico.veiculo_id];
+            setActiveDraggedItem({ ...servico, cliente, veiculo });
+        }
+    };
+
+    const handleDragEnd = async (event) => {
+        setActiveDraggedItem(null);
         const { active, over } = event;
-        if (!over) return; // Sai se não soltou sobre uma coluna válida
 
-        const activeId = active.id; // ID do serviço (card)
-        const overId = over.id;     // ID da coluna ou do card sobre o qual foi solto
+        if (!over) return;
 
-        // Identificar se 'over' é uma coluna ou um card
-        // No nosso caso, `over.id` será o id da coluna se usarmos `useDroppable` nela
-        // ou o id de um card se estivermos apenas reordenando dentro de uma SortableContext.
-        // Para mover entre colunas, `over.data.current.sortable.containerId` pode ser o ID da coluna.
+        const activeId = active.id.toString();
+        let novoStatus = over.id.toString(); // ID da coluna de destino (status)
 
-        const servicoArrastado = localServicos.find(s => s.id === activeId);
-
-        // A coluna de destino é o `id` do `Droppable` (KanbanColumn)
-        // ou o `containerId` se estivermos usando `SortableContext` por coluna.
-        // Vamos assumir que `over.id` é o status da coluna de destino.
-        let novoStatus = overId;
-
-        // Se `over.data.current.type === 'column'`, então `over.id` é o ID da coluna.
-        // Se estivermos soltando sobre um card, `over.data.current.sortable.containerId` é o ID da coluna.
-        if (over.data.current?.type === 'column') {
-            novoStatus = over.id;
-        } else if (over.data.current?.sortable?.containerId) {
-            novoStatus = over.data.current.sortable.containerId;
+        // Se soltar sobre um card, o ID da coluna é `over.data.current.sortable.containerId`
+        if (over.data.current?.type !== 'column' && over.data.current?.sortable?.containerId) {
+            novoStatus = over.data.current.sortable.containerId.toString();
         }
 
+        const servicoArrastado = localServicos.find(s => s.id.toString() === activeId);
 
         if (servicoArrastado && servicoArrastado.status !== novoStatus) {
+            // Atualização Otimista: Atualiza o estado local imediatamente
+            const servicosAnteriores = [...localServicos];
             setLocalServicos(prevServicos =>
                 prevServicos.map(s =>
-                    s.id === activeId ? { ...s, status: novoStatus } : s
+                    s.id.toString() === activeId ? { ...s, status: novoStatus } : s
                 )
             );
-            console.log(`Serviço ${activeId} movido para ${novoStatus}`);
-            // Futuramente: await updateServiceStatus(activeId, novoStatus); reload();
+
+            try {
+                // Chama a API para atualizar o status
+                await servicosService.updateServico(activeId, { status: novoStatus });
+                toast.success(`Serviço #${servicoArrastado.numeroOs} movido para ${statusConfig[novoStatus]?.title || novoStatus}.`);
+                // Opcional: Chamar reload() se quiser garantir consistência total com o backend,
+                // mas a atualização otimista já melhora a UX.
+                // reload();
+            } catch (error) {
+                console.error("Falha ao atualizar status do serviço:", error);
+                toast.error(error.message || "Falha ao mover serviço.");
+                // Reverte para o estado anterior em caso de erro
+                setLocalServicos(servicosAnteriores);
+            }
         }
     };
 
@@ -115,18 +132,64 @@ export default function Dashboard() {
         };
     }, [localServicos, statusConfig]);
 
-    // Se ainda estiver carregando os dados iniciais, mostramos o skeleton do KanbanBoard
+    // 1. Tratar o estado de erro primeiro
+    if (dataError) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-red-50 p-4">
+                <div className="bg-white p-8 rounded-lg shadow-xl text-center">
+                    <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-semibold text-red-700 mb-2">Oops! Algo deu errado.</h2>
+                    <p className="text-slate-600 mb-4">Não foi possível carregar os dados do dashboard.</p>
+                    <p className="text-sm text-slate-500 mb-6">Erro: {typeof dataError === 'string' ? dataError : dataError.message || JSON.stringify(dataError)}</p>
+                    <Button onClick={reload} className="bg-red-600 hover:bg-red-700">
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Tentar Novamente
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    // 2. Tratar o estado de carregamento inicial (antes do DndContext para evitar problemas)
     // O KanbanBoard em si também tem lógica de isLoading, mas aqui é para o DndContext não montar sem dados.
-    if (dataIsLoading && localServicos.length === 0) {
+    if (dataIsLoading && localServicos.length === 0 && !activeDraggedItem) {
         // Pode-se retornar um loader geral para a página ou um skeleton mais completo
+        // Usando o Skeleton importado de "@/components/ui/skeleton"
         return (
             <div className="p-6 space-y-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
                  <div className="max-w-7xl mx-auto space-y-8">
-                    <Skeleton className="h-12 w-1/2 mb-4" />
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                        {[...Array(6)].map((_,i) => <Skeleton key={i} className="h-24 w-full" />)}
+                    {/* Skeleton para o Header do Dashboard */}
+                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                        <div>
+                            <Skeleton className="h-10 w-72 mb-2" /> {/* Título */}
+                            <Skeleton className="h-6 w-96" />      {/* Subtítulo */}
+                        </div>
+                        <Skeleton className="h-12 w-56" /> {/* Botão Nova OS */}
                     </div>
-                    <Skeleton className="h-[600px] w-full" />
+                     {/* Skeleton para StatsCards */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        {[...Array(6)].map((_,i) => <Skeleton key={i} className="h-28 w-full rounded-lg" />)}
+                    </div>
+                    {/* Skeleton para o KanbanBoard */}
+                    <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+                        <CardHeader className="pb-4">
+                            <Skeleton className="h-8 w-1/3" />
+                        </CardHeader>
+                        <CardContent className="pl-2">
+                            <div className="flex gap-6 overflow-x-auto pb-4">
+                                {['col1', 'col2', 'col3', 'col4'].map((statusKey) => (
+                                    <div key={statusKey} className="flex-shrink-0 w-80">
+                                        <Skeleton className="h-8 w-32 mb-4" />
+                                        <div className="space-y-3">
+                                            {[1, 2, 3].map((i) => (
+                                                <Skeleton key={i} className="h-32 w-full rounded-md" />
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         );

@@ -10,14 +10,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Servico } from "../../entities/mock-data";
+// Servico (mock) não é mais usado diretamente para criação, usaremos o service
+import * as servicosService from '../../services/servicos.service.js'; // Importar o service
 import { Save, Plus } from "lucide-react";
-import toast from 'react-hot-toast'; // Import toast
+import toast from 'react-hot-toast';
 
-export default function NewServiceModal({ isOpen, onClose, onSuccess, clientes, veiculos }) {
-    const [formData, setFormData] = useState({
-        numero_os: '',
-        cliente_id: '',
+// onSuccess agora será a função reload do useDashboardData
+export default function NewServiceModal({ isOpen, onClose, onSuccess: reloadDashboard, clientes, veiculos }) {
+    const initialFormData = {
+        numeroOs: '', // Backend espera numeroOs
+        clienteId: '', // Backend espera clienteId
+        veiculoId: '', // Backend espera veiculoId
+        descricaoProblema: '', // Backend espera descricaoProblema
+        dataEntrada: new Date().toISOString().split('T')[0],
+        // Adicionar outros campos que o backend espera, conforme schema.prisma
+        // status: 'AGUARDANDO', // O backend pode definir um status padrão
+        // responsavelId: null, // Pode ser definido depois
+    };
+    const [formData, setFormData] = useState(initialFormData);
         veiculo_id: '',
         descricao_problema: '',
         data_entrada: new Date().toISOString().split('T')[0],
@@ -29,8 +39,8 @@ export default function NewServiceModal({ isOpen, onClose, onSuccess, clientes, 
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        if (!formData.numero_os || !formData.cliente_id || !formData.veiculo_id) {
+        // Ajustar nomes dos campos para o que o backend espera
+        if (!formData.numeroOs || !formData.clienteId || !formData.veiculoId) {
             toast.error("Preencha os campos obrigatórios: Número da OS, Cliente e Veículo.");
             return;
         }
@@ -39,47 +49,31 @@ export default function NewServiceModal({ isOpen, onClose, onSuccess, clientes, 
         const toastId = toast.loading("Criando nova ordem de serviço...");
 
         try {
-            // Simula a criação do serviço. No mock-data, Servico.create não existe,
-            // então vamos apenas simular o sucesso.
-            // Em uma implementação real: await Servico.create(...);
-            console.log("Simulando criação de serviço:", {
-                 ...formData,
-                status: 'aguardando',
-                responsavel_id: 'current_user', // Seria o ID do usuário atual
-                // Mock-data não tem ID auto-gerado, então não podemos adicionar à lista facilmente sem mudar o mock
-            });
+            // Prepara os dados para enviar, garantindo que campos numéricos sejam números
+            const dataToSend = {
+                ...formData,
+                kmEntrada: formData.kmEntrada ? parseInt(formData.kmEntrada, 10) : undefined,
+                valorTotalEstimado: formData.valorTotalEstimado ? parseFloat(formData.valorTotalEstimado) : undefined,
+                // Adicionar outros campos conforme necessário
+            };
 
-            // Simular um pequeno delay da API
-            await new Promise(resolve => setTimeout(resolve, 700));
-
+            await servicosService.createServico(dataToSend);
             toast.success("Ordem de Serviço criada com sucesso!", { id: toastId });
-
-            // Reset form
-            setFormData({
-                numero_os: '',
-                cliente_id: '',
-                veiculo_id: '',
-                descricao_problema: '',
-                data_entrada: new Date().toISOString().split('T')[0],
-                data_previsao: '',
-                valor_mao_obra: 0
-            });
-
-            onSuccess(); // Chama a função para fechar o modal e recarregar dados no Dashboard
+            setFormData(initialFormData); // Reset form
+            reloadDashboard(); // Recarrega os dados do dashboard
+            onClose(); // Fecha o modal
         } catch (error) {
             console.error("Erro ao criar serviço:", error);
-            toast.error("Falha ao criar Ordem de Serviço. Tente novamente.", { id: toastId });
+            toast.error(error.message || "Falha ao criar Ordem de Serviço.", { id: toastId });
         } finally {
             setIsCreating(false);
         }
     };
 
-    // Ajuste para garantir que clientes e veiculos sejam arrays antes de usar filter/map
-    const safeClientes = Array.isArray(clientes) ? clientes : Object.values(clientes || {});
-    const safeVeiculos = Array.isArray(veiculos) ? veiculos : Object.values(veiculos || {});
-
-    const clienteVeiculos = formData.cliente_id
-        ? safeVeiculos.filter(v => v.cliente_id === formData.cliente_id)
+    // Clientes e Veiculos são mapas passados como props
+    const clienteOptions = Object.values(clientes || {});
+    const veiculoOptions = formData.clienteId
+        ? Object.values(veiculos || {}).filter(v => v.clienteId === formData.clienteId)
         : [];
 
     return (
@@ -95,38 +89,41 @@ export default function NewServiceModal({ isOpen, onClose, onSuccess, clientes, 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="numero_os">Número da OS *</Label>
+                            <Label htmlFor="numeroOs">Número da OS *</Label>
                             <Input
-                                id="numero_os"
-                                value={formData.numero_os}
-                                onChange={(e) => setFormData({ ...formData, numero_os: e.target.value })}
-                                placeholder="Ex: OS001"
+                                id="numeroOs"
+                                value={formData.numeroOs}
+                                onChange={handleChange}
+                                placeholder="Ex: OS2024-001"
                                 required
                             />
                         </div>
 
                         <div>
-                            <Label htmlFor="data_entrada">Data de Entrada</Label>
+                            <Label htmlFor="dataEntrada">Data de Entrada</Label>
                             <Input
-                                id="data_entrada"
+                                id="dataEntrada"
                                 type="date"
-                                value={formData.data_entrada}
-                                onChange={(e) => setFormData({ ...formData, data_entrada: e.target.value })}
+                                value={formData.dataEntrada}
+                                onChange={handleChange}
                             />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="cliente_id">Cliente *</Label>
-                            <Select value={formData.cliente_id} onValueChange={(value) => setFormData({ ...formData, cliente_id: value, veiculo_id: '' })}>
-                                <SelectTrigger>
+                            <Label htmlFor="clienteId">Cliente *</Label>
+                            <Select
+                                value={formData.clienteId}
+                                onValueChange={(value) => setFormData({ ...formData, clienteId: value, veiculoId: '' })}
+                            >
+                                <SelectTrigger id="clienteIdSelectTrigger">
                                     <SelectValue placeholder="Selecione o cliente" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {clientes.map((cliente) => (
-                                        <SelectItem key={cliente.id} value={cliente.id}>
-                                            {cliente.nome_completo}
+                                    {clienteOptions.map((cliente) => (
+                                        <SelectItem key={cliente.id} value={cliente.id.toString()}>
+                                            {cliente.nomeCompleto}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -134,18 +131,18 @@ export default function NewServiceModal({ isOpen, onClose, onSuccess, clientes, 
                         </div>
 
                         <div>
-                            <Label htmlFor="veiculo_id">Veículo *</Label>
+                            <Label htmlFor="veiculoId">Veículo *</Label>
                             <Select
-                                value={formData.veiculo_id}
-                                onValueChange={(value) => setFormData({ ...formData, veiculo_id: value })}
-                                disabled={!formData.cliente_id}
+                                value={formData.veiculoId} // Campo ajustado
+                                onValueChange={(value) => setFormData({ ...formData, veiculoId: value })}
+                                disabled={!formData.clienteId}
                             >
-                                <SelectTrigger>
+                                <SelectTrigger id="veiculoIdSelectTrigger">
                                     <SelectValue placeholder="Selecione o veículo" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {clienteVeiculos.map((veiculo) => (
-                                        <SelectItem key={veiculo.id} value={veiculo.id}>
+                                    {veiculoOptions.map((veiculo) => (
+                                        <SelectItem key={veiculo.id} value={veiculo.id.toString()}>
                                             {veiculo.marca} {veiculo.modelo} - {veiculo.placa}
                                         </SelectItem>
                                     ))}
@@ -154,43 +151,32 @@ export default function NewServiceModal({ isOpen, onClose, onSuccess, clientes, 
                         </div>
                     </div>
 
+                    {/* Adicionar campos kmEntrada e valorTotalEstimado se desejar */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="data_previsao">Data de Previsão</Label>
-                            <Input
-                                id="data_previsao"
-                                type="date"
-                                value={formData.data_previsao}
-                                onChange={(e) => setFormData({ ...formData, data_previsao: e.target.value })}
-                            />
+                            <Label htmlFor="kmEntrada">KM de Entrada</Label>
+                            <Input id="kmEntrada" type="number" value={formData.kmEntrada || ''} onChange={handleChange} />
                         </div>
-
                         <div>
-                            <Label htmlFor="valor_mao_obra">Valor da Mão de Obra</Label>
-                            <Input
-                                id="valor_mao_obra"
-                                type="number"
-                                step="0.01"
-                                value={formData.valor_mao_obra}
-                                onChange={(e) => setFormData({ ...formData, valor_mao_obra: parseFloat(e.target.value) || 0 })}
-                                placeholder="0,00"
-                            />
+                            <Label htmlFor="valorTotalEstimado">Valor Estimado (R$)</Label>
+                            <Input id="valorTotalEstimado" type="number" step="0.01" value={formData.valorTotalEstimado || ''} onChange={handleChange} placeholder="0.00"/>
                         </div>
                     </div>
 
+
                     <div>
-                        <Label htmlFor="descricao_problema">Descrição do Problema</Label>
+                        <Label htmlFor="descricaoProblema">Descrição do Problema</Label>
                         <Textarea
-                            id="descricao_problema"
-                            value={formData.descricao_problema}
-                            onChange={(e) => setFormData({ ...formData, descricao_problema: e.target.value })}
+                            id="descricaoProblema" // Campo ajustado
+                            value={formData.descricaoProblema}
+                            onChange={handleChange}
                             placeholder="Descreva o problema relatado pelo cliente..."
                             className="h-24"
                         />
                     </div>
 
-                    <div className="flex justify-end gap-3">
-                        <Button type="button" variant="outline" onClick={onClose}>
+                    <div className="flex justify-end gap-3 pt-4">
+                        <Button type="button" variant="outline" onClick={() => { setFormData(initialFormData); onClose();}}>
                             Cancelar
                         </Button>
                         <Button
