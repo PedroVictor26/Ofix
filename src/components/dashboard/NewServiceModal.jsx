@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Servico } from "../../entities/mock-data";
 import { Save, Plus } from "lucide-react";
+import toast from 'react-hot-toast'; // Import toast
 
 export default function NewServiceModal({ isOpen, onClose, onSuccess, clientes, veiculos }) {
     const [formData, setFormData] = useState({
@@ -30,18 +31,28 @@ export default function NewServiceModal({ isOpen, onClose, onSuccess, clientes, 
         e.preventDefault();
 
         if (!formData.numero_os || !formData.cliente_id || !formData.veiculo_id) {
-            alert("Preencha todos os campos obrigatórios!");
+            toast.error("Preencha os campos obrigatórios: Número da OS, Cliente e Veículo.");
             return;
         }
 
         setIsCreating(true);
+        const toastId = toast.loading("Criando nova ordem de serviço...");
 
         try {
-            await Servico.create({
-                ...formData,
+            // Simula a criação do serviço. No mock-data, Servico.create não existe,
+            // então vamos apenas simular o sucesso.
+            // Em uma implementação real: await Servico.create(...);
+            console.log("Simulando criação de serviço:", {
+                 ...formData,
                 status: 'aguardando',
-                responsavel_id: 'current_user' // Seria o ID do usuário atual
+                responsavel_id: 'current_user', // Seria o ID do usuário atual
+                // Mock-data não tem ID auto-gerado, então não podemos adicionar à lista facilmente sem mudar o mock
             });
+
+            // Simular um pequeno delay da API
+            await new Promise(resolve => setTimeout(resolve, 700));
+
+            toast.success("Ordem de Serviço criada com sucesso!", { id: toastId });
 
             // Reset form
             setFormData({
@@ -54,15 +65,22 @@ export default function NewServiceModal({ isOpen, onClose, onSuccess, clientes, 
                 valor_mao_obra: 0
             });
 
-            onSuccess();
+            onSuccess(); // Chama a função para fechar o modal e recarregar dados no Dashboard
         } catch (error) {
             console.error("Erro ao criar serviço:", error);
+            toast.error("Falha ao criar Ordem de Serviço. Tente novamente.", { id: toastId });
+        } finally {
+            setIsCreating(false);
         }
-
-        setIsCreating(false);
     };
 
-    const clienteVeiculos = veiculos.filter(v => v.cliente_id === formData.cliente_id);
+    // Ajuste para garantir que clientes e veiculos sejam arrays antes de usar filter/map
+    const safeClientes = Array.isArray(clientes) ? clientes : Object.values(clientes || {});
+    const safeVeiculos = Array.isArray(veiculos) ? veiculos : Object.values(veiculos || {});
+
+    const clienteVeiculos = formData.cliente_id
+        ? safeVeiculos.filter(v => v.cliente_id === formData.cliente_id)
+        : [];
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>

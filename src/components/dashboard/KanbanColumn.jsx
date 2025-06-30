@@ -1,52 +1,76 @@
 import React from 'react';
 import { motion, AnimatePresence } from "framer-motion";
-import { Skeleton } from "@/components/ui/skeleton";
-import KanbanColumn from './KanbanColumn';
+import ServiceCard from './ServiceCard';
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { useDroppable, useDndMonitor } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import DraggableServiceCard from './DraggableServiceCard'; // Criaremos este componente
 
-export default function KanbanBoard({ servicos, clientes, veiculos, onServiceClick, statusConfig, isLoading }) {
-    const getServicesByStatus = (status) => {
-        if (!servicos) return [];
-        return servicos.filter(servico => servico.status === status);
-    };
+export default function KanbanColumn({ status, config, servicos, serviceIds, clientes, veiculos, onServiceClick }) {
+    const { setNodeRef, isOver } = useDroppable({
+        id: status, // ID da coluna (ex: "aguardando", "em_andamento")
+        data: {
+            type: 'column', // Para identificar o tipo de droppable no handleDragEnd
+            accepts: ['card'] // Que tipo de draggable ele aceita
+        }
+    });
 
-    // A verificação de isLoading já está aqui, o que é ótimo.
-    if (isLoading) {
-        return (
-            <div className="flex gap-6 overflow-x-auto pb-4">
-                {/* Se statusConfig pode ser nulo aqui, usamos um array padrão para os Skeletons */}
-                {(statusConfig ? Object.keys(statusConfig) : ['A Fazer', 'Em Andamento', 'Finalizado']).map((status) => (
-                    <div key={status} className="flex-shrink-0 w-80">
-                        <Skeleton className="h-8 w-32 mb-4" />
-                        <div className="space-y-3">
-                            {[1, 2, 3].map((i) => (
-                                <Skeleton key={i} className="h-32 w-full" />
-                            ))}
-                        </div>
-                    </div>
-                ))}
-            </div>
-        );
-    }
-
-    // NOVA VERIFICAÇÃO: Garante que não tentamos renderizar sem a configuração das colunas.
-    if (!statusConfig) {
-        return <p>Configuração do painel não encontrada.</p>; // Ou retorne o mesmo esqueleto de carregamento
-    }
+    // Para feedback visual quando um card está sobre a coluna
+    const columnStyle = isOver ? { outline: '2px dashed #2563eb' } : {};
 
     return (
-        <div className="flex gap-6 overflow-x-auto pb-4 min-h-[600px]">
-            {/* Este código agora está seguro */}
-            {Object.entries(statusConfig).map(([status, config]) => (
-                <KanbanColumn
-                    key={status}
-                    status={status}
-                    config={config}
-                    servicos={getServicesByStatus(status)}
-                    clientes={clientes}
-                    veiculos={veiculos}
-                    onServiceClick={onServiceClick}
-                />
-            ))}
+        <div
+            ref={setNodeRef}
+            className="flex-shrink-0 w-80 p-1 rounded-lg" // Adicionado padding e rounded
+            style={columnStyle} // Estilo para quando está "isOver"
+        >
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                    <config.icon className={`w-5 h-5 ${config.textColor || 'text-slate-700'}`} />
+                    <h3 className={`font-semibold ${config.textColor || 'text-slate-700'}`}>{config.title}</h3>
+                </div>
+                <Badge variant="secondary" className="text-sm">
+                    {servicos?.length || 0}
+                </Badge>
+            </div>
+
+            <ScrollArea className="h-[calc(100vh-280px)] pr-3">
+                <SortableContext items={serviceIds || []} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-3">
+                        <AnimatePresence mode="popLayout"> {/* Adicionado AnimatePresence */}
+                            {servicos && servicos.length > 0 ? (
+                                servicos.map((servico) => {
+                                    const cliente = clientes[servico.cliente_id];
+                                const veiculo = veiculos[servico.veiculo_id];
+                                return (
+                                    <DraggableServiceCard
+                                        key={servico.id}
+                                        id={servico.id.toString()} // ID para dnd-kit precisa ser string
+                                        servico={servico}
+                                        cliente={cliente}
+                                        veiculo={veiculo}
+                                        onClick={() => onServiceClick(servico)}
+                                        statusConfig={config}
+                                    />
+                                );
+                            })
+                            ) : (
+                                // Manter um placeholder visível para drop, mesmo que não animado pela AnimatePresence
+                                // ou remover se a coluna vazia não precisar de feedback especial além do `isOver`
+                                <></>
+                            )}
+                        </AnimatePresence>
+                        {/* Placeholder para quando a coluna está vazia e não há itens para AnimatePresence */}
+                        {(!servicos || servicos.length === 0) && (
+                             <div className="text-center py-10 min-h-[100px]">
+                                <p className="text-sm text-slate-500">Arraste cards para cá</p>
+                            </div>
+                        )}
+                    </div>
+                </SortableContext>
+                <ScrollBar orientation="vertical" />
+            </ScrollArea>
         </div>
     );
 }
