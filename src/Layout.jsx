@@ -28,6 +28,7 @@ import {
     SidebarProvider,
     SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { Toaster } from 'react-hot-toast';
 
 const navigationItems = [
     {
@@ -75,6 +76,31 @@ export default function Layout() {
 
     return (
         <SidebarProvider>
+            <Toaster
+                position="top-right"
+                reverseOrder={false}
+                toastOptions={{
+                    duration: 3000,
+                    style: {
+                        background: '#333',
+                        color: '#fff',
+                    },
+                    success: {
+                        duration: 3000,
+                        theme: {
+                            primary: 'green',
+                            secondary: 'black',
+                        },
+                    },
+                    error: {
+                        duration: 4000,
+                         theme: {
+                            primary: 'red',
+                            secondary: 'black',
+                        },
+                    }
+                }}
+            />
             <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-blue-50">
                 {/* Estilos CSS customizados */}
                 <style>

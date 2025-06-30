@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react"; // Import useMemo, useEffect
 import { Plus, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,10 +9,27 @@ import StatsCards from "@/components/dashboard/StatsCards";
 import KanbanBoard from "@/components/dashboard/KanbanBoard";
 import ServiceModal from "@/components/dashboard/ServiceModal";
 import NewServiceModal from "@/components/dashboard/NewServiceModal";
+import {
+    DndContext,
+    closestCorners,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+
 
 export default function Dashboard() {
-    const { servicos, clientes, veiculos, isLoading, reload } = useDashboardData();
+    const {
+        servicos: initialServicos, // Renomeado para evitar conflito de nomes
+        clientes,
+        veiculos,
+        isLoading: dataIsLoading, // Renomeado para evitar conflito com possível estado de loading do D&D
+        reload
+    } = useDashboardData();
 
+    const [localServicos, setLocalServicos] = useState([]);
     const [selectedService, setSelectedService] = useState(null);
     const [showServiceModal, setShowServiceModal] = useState(false);
     const [showNewServiceModal, setShowNewServiceModal] = useState(false);
@@ -33,18 +50,97 @@ export default function Dashboard() {
         reload();
     };
 
-    const stats = {
-        total: servicos.length,
-        ...Object.keys(statusConfig).reduce((acc, key) => {
-            acc[key] = servicos.filter((s) => s.status === key).length;
-            return acc;
-        }, {}),
+    useEffect(() => {
+        if (initialServicos && initialServicos.length > 0) {
+            setLocalServicos(initialServicos);
+        } else if (!dataIsLoading && initialServicos && initialServicos.length === 0) {
+            // Caso não esteja carregando e initialServicos seja um array vazio (mock pode retornar vazio)
+            setLocalServicos([]);
+        }
+    }, [initialServicos, dataIsLoading]);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragEnd = (event) => {
+        const { active, over } = event;
+        if (!over) return; // Sai se não soltou sobre uma coluna válida
+
+        const activeId = active.id; // ID do serviço (card)
+        const overId = over.id;     // ID da coluna ou do card sobre o qual foi solto
+
+        // Identificar se 'over' é uma coluna ou um card
+        // No nosso caso, `over.id` será o id da coluna se usarmos `useDroppable` nela
+        // ou o id de um card se estivermos apenas reordenando dentro de uma SortableContext.
+        // Para mover entre colunas, `over.data.current.sortable.containerId` pode ser o ID da coluna.
+
+        const servicoArrastado = localServicos.find(s => s.id === activeId);
+
+        // A coluna de destino é o `id` do `Droppable` (KanbanColumn)
+        // ou o `containerId` se estivermos usando `SortableContext` por coluna.
+        // Vamos assumir que `over.id` é o status da coluna de destino.
+        let novoStatus = overId;
+
+        // Se `over.data.current.type === 'column'`, então `over.id` é o ID da coluna.
+        // Se estivermos soltando sobre um card, `over.data.current.sortable.containerId` é o ID da coluna.
+        if (over.data.current?.type === 'column') {
+            novoStatus = over.id;
+        } else if (over.data.current?.sortable?.containerId) {
+            novoStatus = over.data.current.sortable.containerId;
+        }
+
+
+        if (servicoArrastado && servicoArrastado.status !== novoStatus) {
+            setLocalServicos(prevServicos =>
+                prevServicos.map(s =>
+                    s.id === activeId ? { ...s, status: novoStatus } : s
+                )
+            );
+            console.log(`Serviço ${activeId} movido para ${novoStatus}`);
+            // Futuramente: await updateServiceStatus(activeId, novoStatus); reload();
+        }
     };
 
+    const stats = useMemo(() => {
+        return {
+            total: localServicos.length,
+            ...Object.keys(statusConfig).reduce((acc, key) => {
+                acc[key] = localServicos.filter((s) => s.status === key).length;
+                return acc;
+            }, {}),
+        };
+    }, [localServicos, statusConfig]);
+
+    // Se ainda estiver carregando os dados iniciais, mostramos o skeleton do KanbanBoard
+    // O KanbanBoard em si também tem lógica de isLoading, mas aqui é para o DndContext não montar sem dados.
+    if (dataIsLoading && localServicos.length === 0) {
+        // Pode-se retornar um loader geral para a página ou um skeleton mais completo
+        return (
+            <div className="p-6 space-y-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+                 <div className="max-w-7xl mx-auto space-y-8">
+                    <Skeleton className="h-12 w-1/2 mb-4" />
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        {[...Array(6)].map((_,i) => <Skeleton key={i} className="h-24 w-full" />)}
+                    </div>
+                    <Skeleton className="h-[600px] w-full" />
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="p-6 space-y-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
-            <div className="max-w-7xl mx-auto space-y-8">
-                {/* Header */}
+        <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragEnd={handleDragEnd}
+        >
+            <div className="p-6 space-y-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+                <div className="max-w-7xl mx-auto space-y-8">
+                    {/* Header */}
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                     <div>
                         <h1 className="text-4xl font-bold text-slate-900 mb-2">
@@ -93,12 +189,13 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent className="pl-2">
                         <KanbanBoard
-                            servicos={servicos}
+                            servicos={localServicos} // Usar localServicos
                             clientes={clientes}
                             veiculos={veiculos}
                             onServiceClick={openService}
                             statusConfig={statusConfig}
-                            isLoading={isLoading}
+                            isLoading={dataIsLoading && localServicos.length === 0} // KanbanBoard ainda pode ter seu próprio skeleton interno
+                            // handleUpdateStatus={handleUpdateStatus} // Passar a função de atualização
                         />
                     </CardContent>
                 </Card>
@@ -122,194 +219,6 @@ export default function Dashboard() {
                 veiculos={veiculos}
             />
         </div>
+    </DndContext>
     );
 }
-
-
-
-// import React, { useState, useEffect } from "react";
-// import { Button } from "@/components/ui/button";
-// import { Servico, Cliente, Veiculo } from "../entities/mock-data";
-// import { Card, CardContent, CardHeader, CardTitle }a from "@/components/ui/card";
-// import { Badge } from "@/components/ui/badge";
-// import { Plus, Calendar, AlertCircle, CheckCircle2, Clock, Wrench } from "lucide-react";
-// import { motion, AnimatePresence } from "framer-motion";
-
-// import KanbanBoard from "../components/dashboard/KanbanBoard";
-// import ServiceModal from "../components/dashboard/ServiceModal";
-// import NewServiceModal from "../components/dashboard/NewServiceModal";
-// import StatsCards from "../components/dashboard/StatsCards";
-
-// const statusConfig = {
-//     aguardando: {
-//         title: "Aguardando",
-//         color: "bg-slate-100 text-slate-700",
-//         icon: Clock,
-//         gradient: "from-slate-500 to-slate-600"
-//     },
-//     em_andamento: {
-//         title: "Em Andamento",
-//         color: "bg-blue-100 text-blue-700",
-//         icon: Wrench,
-//         gradient: "from-blue-500 to-blue-600"
-//     },
-//     aguardando_pecas: {
-//         title: "Aguardando Peças",
-//         color: "bg-orange-100 text-orange-700",
-//         icon: AlertCircle,
-//         gradient: "from-orange-500 to-orange-600"
-//     },
-//     aguardando_aprovacao: {
-//         title: "Aguardando Aprovação",
-//         color: "bg-purple-100 text-purple-700",
-//         icon: Calendar,
-//         gradient: "from-purple-500 to-purple-600"
-//     },
-//     finalizado: {
-//         title: "Finalizado",
-//         color: "bg-green-100 text-green-700",
-//         icon: CheckCircle2,
-//         gradient: "from-green-500 to-green-600"
-//     }
-// };
-
-// export default function Dashboard() {
-//     const [servicos, setServicos] = useState([]);
-//     const [clientes, setClientes] = useState([]);
-//     const [veiculos, setVeiculos] = useState([]);
-//     const [selectedService, setSelectedService] = useState(null);
-//     const [showServiceModal, setShowServiceModal] = useState(false);
-//     const [showNewServiceModal, setShowNewServiceModal] = useState(false);
-//     const [isLoading, setIsLoading] = useState(true);
-
-//     useEffect(() => {
-//         loadData();
-//     }, []);
-
-//     const loadData = async () => {
-//         setIsLoading(true);
-//         try {
-//             const [servicosData, clientesData, veiculosData] = await Promise.all([
-//                 Servico.list(),
-//                 Cliente.list(),
-//                 Veiculo.list()
-//             ]);
-
-//             setServicos(servicosData);
-//             setClientes(clientesData);
-//             setVeiculos(veiculosData);
-//         } catch (error) {
-//             console.error("Erro ao carregar dados:", error);
-//         }
-//         setIsLoading(false);
-//     };
-
-//     const handleServiceClick = (service) => {
-//         setSelectedService(service);
-//         setShowServiceModal(true);
-//     };
-
-//     const handleServiceUpdate = () => {
-//         loadData();
-//         setShowServiceModal(false);
-//         setSelectedService(null);
-//     };
-
-//     const handleNewService = () => {
-//         loadData();
-//         setShowNewServiceModal(false);
-//     };
-
-//     const getServiceStats = () => {
-//         const stats = {
-//             total: servicos.length,
-//             aguardando: servicos.filter(s => s.status === 'aguardando').length,
-//             em_andamento: servicos.filter(s => s.status === 'em_andamento').length,
-//             aguardando_pecas: servicos.filter(s => s.status === 'aguardando_pecas').length,
-//             aguardando_aprovacao: servicos.filter(s => s.status === 'aguardando_aprovacao').length,
-//             finalizado: servicos.filter(s => s.status === 'finalizado').length,
-//         };
-//         return stats;
-//     };
-
-//     const stats = getServiceStats();
-
-//     return (
-//         <div className="p-6 space-y-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
-//             <div className="max-w-7xl mx-auto space-y-8">
-//                 {/* Header */}
-//                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-//                     <div>
-//                         <h1 className="text-4xl font-bold text-slate-900 mb-2">Dashboard Operacional</h1>
-//                         <p className="text-slate-600 text-lg">Gerencie todos os serviços da sua oficina</p>
-//                     </div>
-//                     <Button
-//                         onClick={() => setShowNewServiceModal(true)}
-//                         className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-3"
-//                         size="lg"
-//                     >
-//                         <Plus className="w-5 h-5 mr-2" />
-//                         Nova Ordem de Serviço
-//                     </Button>
-//                 </div>
-
-//                 {/* Stats Cards */}
-//                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-//                     <StatsCards
-//                         title="Total de Serviços"
-//                         value={stats.total}
-//                         icon={Wrench}
-//                         gradient="from-slate-500 to-slate-600"
-//                     />
-//                     {Object.entries(statusConfig).map(([status, config]) => (
-//                         <StatsCards
-//                             key={status}
-//                             title={config.title}
-//                             value={stats[status]}
-//                             icon={config.icon}
-//                             gradient={config.gradient}
-//                         />
-//                     ))}
-//                 </div>
-
-//                 {/* Kanban Board */}
-//                 <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-//                     <CardHeader className="pb-4">
-//                         <CardTitle className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-//                             <Wrench className="w-6 h-6 text-blue-600" />
-//                             Quadro de Serviços
-//                         </CardTitle>
-//                     </CardHeader>
-//                     <CardContent className="pl-2"> {/* Adicionei a classe do seu código anterior para consistência */}
-//                         <KanbanBoard
-//                             servicos={servicos}
-//                             clientes={clientes}
-//                             veiculos={veiculos}
-//                             onServiceClick={handleServiceClick}
-//                             statusConfig={statusConfig} // <-- A LINHA QUE FALTAVA!
-//                             isLoading={isLoading}
-//                         />
-//                     </CardContent>
-//                 </Card>
-//             </div>
-
-//             {/* Modals */}
-//             <ServiceModal
-//                 isOpen={showServiceModal}
-//                 onClose={() => setShowServiceModal(false)}
-//                 service={selectedService}
-//                 onUpdate={handleServiceUpdate}
-//                 clientes={clientes}
-//                 veiculos={veiculos}
-//             />
-
-//             <NewServiceModal
-//                 isOpen={showNewServiceModal}
-//                 onClose={() => setShowNewServiceModal(false)}
-//                 onSuccess={handleNewService}
-//                 clientes={clientes}
-//                 veiculos={veiculos}
-//             />
-//         </div>
-//     );
-// }

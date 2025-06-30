@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Servico, ProcedimentoPadrao, MensagemPadrao, Peca } from "../../entities/mock-data";
 import { Wrench, MessageCircle, Package, FileText, Save } from "lucide-react";
+import toast from 'react-hot-toast'; // Import toast
 
 import ServiceDetails from './ServiceDetails';
 import ServiceProcedures from './ServiceProcedures';
@@ -48,18 +49,22 @@ export default function ServiceModal({ isOpen, onClose, service, onUpdate, clien
     };
 
     const handleServiceUpdate = async (updatedData) => {
+        const toastId = toast.loading("Salvando alterações...");
         try {
-            await Servico.update(service.id, updatedData);
-            onUpdate();
+            await Servico.update(service.id, updatedData); // Simula chamada à API
+            toast.success("Serviço atualizado com sucesso!", { id: toastId });
+            onUpdate(); // Chama a função passada por props para fechar modal e recarregar dados no Dashboard
         } catch (error) {
             console.error("Erro ao atualizar serviço:", error);
+            toast.error("Falha ao atualizar serviço. Tente novamente.", { id: toastId });
         }
     };
 
     if (!service) return null;
 
-    const cliente = clientes.find(c => c.id === service.cliente_id);
-    const veiculo = veiculos.find(v => v.id === service.veiculo_id);
+    // Clientes e Veiculos agora são mapas/objetos
+    const cliente = clientes[service.cliente_id];
+    const veiculo = veiculos[service.veiculo_id];
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>

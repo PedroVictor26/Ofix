@@ -4,8 +4,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import KanbanColumn from './KanbanColumn';
 
 export default function KanbanBoard({ servicos, clientes, veiculos, onServiceClick, statusConfig, isLoading }) {
-    const getServicesByStatus = (status) => {
-        return servicos.filter(servico => servico.status === status);
+    const getServicesByStatus = (statusKey) => {
+        // Garantir que servicos não é undefined antes de filtrar
+        if (!servicos) return [];
+        return servicos.filter(servico => servico.status === statusKey);
     };
 
     if (isLoading) {
@@ -32,10 +34,12 @@ export default function KanbanBoard({ servicos, clientes, veiculos, onServiceCli
                     key={status}
                     status={status}
                     config={config}
-                    servicos={getServicesByStatus(status)}
-                    clientes={clientes}
-                    veiculos={veiculos}
+                    servicos={getServicesByStatus(status)} // Lista de objetos de serviço completos
+                    clientes={clientes} // Mapa de clientes
+                    veiculos={veiculos} // Mapa de veiculos
                     onServiceClick={onServiceClick}
+                    // Passa os IDs dos serviços para o SortableContext dentro da coluna
+                    serviceIds={getServicesByStatus(status).map(s => s.id.toString())}
                 />
             ))}
         </div>

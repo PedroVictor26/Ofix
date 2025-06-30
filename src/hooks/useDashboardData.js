@@ -11,14 +11,22 @@ export default function useDashboardData() {
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [s, c, v] = await Promise.all([
+            const [s, cArray, vArray] = await Promise.all([
                 Servico.list(),
                 Cliente.list(),
                 Veiculo.list()
             ]);
             setServicos(s);
-            setClientes(c);
-            setVeiculos(v);
+            const clientesMap = cArray.reduce((acc, cliente) => {
+                acc[cliente.id] = cliente;
+                return acc;
+            }, {});
+            const veiculosMap = vArray.reduce((acc, veiculo) => {
+                acc[veiculo.id] = veiculo;
+                return acc;
+            }, {});
+            setClientes(clientesMap);
+            setVeiculos(veiculosMap);
         } catch (err) {
             console.error("Erro ao carregar dados:", err);
         }
