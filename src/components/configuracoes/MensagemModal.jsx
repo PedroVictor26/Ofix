@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import {
     Dialog,
     DialogContent,
@@ -45,11 +46,12 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
         e.preventDefault();
 
         if (!formData.nome_mensagem || !formData.texto_mensagem) {
-            alert("Preencha os campos obrigatórios!");
+            toast.error("Preencha os campos obrigatórios: Nome da Mensagem e Texto da Mensagem.");
             return;
         }
 
         setIsSaving(true);
+        const toastId = toast.loading(mensagem ? "Atualizando mensagem..." : "Criando mensagem...");
 
         try {
             if (mensagem) {
@@ -57,13 +59,14 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
             } else {
                 await MensagemPadrao.create(formData);
             }
-
+            toast.success(mensagem ? "Mensagem atualizada com sucesso!" : "Mensagem criada com sucesso!", { id: toastId });
             onSuccess();
         } catch (error) {
             console.error("Erro ao salvar mensagem:", error);
+            toast.error(`Erro ao salvar mensagem: ${error.message || 'Erro desconhecido'}`, { id: toastId });
+        } finally {
+            setIsSaving(false);
         }
-
-        setIsSaving(false);
     };
 
     const categorias = [

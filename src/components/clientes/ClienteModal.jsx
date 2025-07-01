@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import {
     Dialog,
     DialogContent,
@@ -28,11 +29,12 @@ export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
         e.preventDefault();
 
         if (!formData.nome_completo || !formData.telefone) {
-            alert("Preencha os campos obrigatórios!");
+            toast.error("Preencha os campos obrigatórios: Nome Completo e Telefone.");
             return;
         }
 
         setIsSaving(true);
+        const toastId = toast.loading(cliente ? "Atualizando cliente..." : "Criando cliente...");
 
         try {
             if (cliente) {
@@ -49,13 +51,14 @@ export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
                 endereco: '',
                 observacoes: ''
             });
-
+            toast.success(cliente ? "Cliente atualizado com sucesso!" : "Cliente criado com sucesso!", { id: toastId });
             onSuccess();
         } catch (error) {
             console.error("Erro ao salvar cliente:", error);
+            toast.error(`Erro ao salvar cliente: ${error.message || 'Erro desconhecido'}`, { id: toastId });
+        } finally {
+            setIsSaving(false);
         }
-
-        setIsSaving(false);
     };
 
     return (

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import {
     Dialog,
     DialogContent,
@@ -44,11 +45,12 @@ export default function PecaModal({ isOpen, onClose, peca, fornecedores, onSucce
         e.preventDefault();
 
         if (!formData.nome_peca || !formData.codigo_sku) {
-            alert("Preencha os campos obrigatórios!");
+            toast.error("Preencha os campos obrigatórios: Nome da Peça e Código SKU.");
             return;
         }
 
         setIsSaving(true);
+        const toastId = toast.loading(peca ? "Atualizando peça..." : "Criando peça...");
 
         try {
             if (peca) {
@@ -68,13 +70,14 @@ export default function PecaModal({ isOpen, onClose, peca, fornecedores, onSucce
                 estoque_minimo: 1,
                 categoria: 'outros'
             });
-
+            toast.success(peca ? "Peça atualizada com sucesso!" : "Peça criada com sucesso!", { id: toastId });
             onSuccess();
         } catch (error) {
             console.error("Erro ao salvar peça:", error);
+            toast.error(`Erro ao salvar peça: ${error.message || 'Erro desconhecido'}`, { id: toastId });
+        } finally {
+            setIsSaving(false);
         }
-
-        setIsSaving(false);
     };
 
     return (

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import {
     Dialog,
     DialogContent,
@@ -28,11 +29,12 @@ export default function VeiculoModal({ isOpen, onClose, clienteId, onSuccess }) 
         e.preventDefault();
 
         if (!formData.placa || !formData.marca || !formData.modelo) {
-            alert("Preencha os campos obrigatórios!");
+            toast.error("Preencha os campos obrigatórios: Placa, Marca e Modelo.");
             return;
         }
 
         setIsSaving(true);
+        const toastId = toast.loading("Salvando veículo...");
 
         try {
             await Veiculo.create({
@@ -48,13 +50,14 @@ export default function VeiculoModal({ isOpen, onClose, clienteId, onSuccess }) 
                 cor: '',
                 observacoes: ''
             });
-
+            toast.success("Veículo salvo com sucesso!", { id: toastId });
             onSuccess();
         } catch (error) {
             console.error("Erro ao salvar veículo:", error);
+            toast.error(`Erro ao salvar veículo: ${error.message || 'Erro desconhecido'}`, { id: toastId });
+        } finally {
+            setIsSaving(false);
         }
-
-        setIsSaving(false);
     };
 
     return (
