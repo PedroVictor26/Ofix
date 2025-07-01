@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import {
     Dialog,
     DialogContent,
@@ -28,11 +29,12 @@ export default function FornecedorModal({ isOpen, onClose, onSuccess }) {
         e.preventDefault();
 
         if (!formData.nome_fornecedor || !formData.contato) {
-            alert("Preencha os campos obrigatórios!");
+            toast.error("Preencha os campos obrigatórios: Nome do Fornecedor e Contato.");
             return;
         }
 
         setIsSaving(true);
+        const toastId = toast.loading("Salvando fornecedor...");
 
         try {
             await Fornecedor.create(formData);
@@ -45,13 +47,14 @@ export default function FornecedorModal({ isOpen, onClose, onSuccess }) {
                 endereco: '',
                 observacoes: ''
             });
-
+            toast.success("Fornecedor salvo com sucesso!", { id: toastId });
             onSuccess();
         } catch (error) {
             console.error("Erro ao salvar fornecedor:", error);
+            toast.error(`Erro ao salvar fornecedor: ${error.message || 'Erro desconhecido'}`, { id: toastId });
+        } finally {
+            setIsSaving(false);
         }
-
-        setIsSaving(false);
     };
 
     return (

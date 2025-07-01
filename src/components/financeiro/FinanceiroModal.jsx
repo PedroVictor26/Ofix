@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import {
     Dialog,
     DialogContent,
@@ -9,17 +10,33 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Fornecedor } from "../../entities/mock-data";
-import { Save, Building2 } from "lucide-react";
+// TODO: Criar entidade TransacaoFinanceira em mock-data.js ou integrar com API real
+// import { TransacaoFinanceira } from "../../entities/mock-data";
+import { Save, DollarSign, TrendingUp, TrendingDown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export default function FornecedorModal({ isOpen, onClose, onSuccess }) {
+
+// Mock temporário até a entidade ser criada
+const TransacaoFinanceira = {
+    create: async (data) => {
+        console.log("Mock TransacaoFinanceira.create chamada com:", data);
+        // Simular um delay de API
+        await new Promise(resolve => setTimeout(resolve, 500));
+        // Simular sucesso ou falha aleatoriamente para teste
+        // if (Math.random() > 0.8) throw new Error("Falha simulada ao criar transação");
+        return { id: Date.now(), ...data };
+    }
+};
+
+
+export default function FinanceiroModal({ isOpen, onClose, onSuccess, transacao }) {
     const [formData, setFormData] = useState({
-        nome_fornecedor: '',
-        contato: '',
-        cnpj: '',
-        email: '',
-        endereco: '',
-        observacoes: ''
+        descricao: transacao?.descricao || '',
+        valor: transacao?.valor || 0,
+        tipo: transacao?.tipo || 'receita', // 'receita' ou 'despesa'
+        data: transacao?.data || new Date().toISOString().split('T')[0],
+        categoria: transacao?.categoria || '',
+        observacoes: transacao?.observacoes || ''
     });
 
     const [isSaving, setIsSaving] = useState(false);
@@ -27,98 +44,116 @@ export default function FornecedorModal({ isOpen, onClose, onSuccess }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.nome_fornecedor || !formData.contato) {
-            alert("Preencha os campos obrigatórios!");
+        if (!formData.descricao || !formData.valor || !formData.data) {
+            toast.error("Preencha os campos obrigatórios: Descrição, Valor e Data.");
+            return;
+        }
+        if (formData.valor <= 0) {
+            toast.error("O valor da transação deve ser positivo.");
             return;
         }
 
         setIsSaving(true);
+        const toastId = toast.loading(transacao ? "Atualizando transação..." : "Criando transação...");
 
         try {
-            await Fornecedor.create(formData);
+            // TODO: Implementar update se 'transacao' for passado como prop (para edição)
+            // if (transacao) {
+            //     await TransacaoFinanceira.update(transacao.id, formData);
+            // } else {
+            await TransacaoFinanceira.create(formData);
+            // }
 
             setFormData({
-                nome_fornecedor: '',
-                contato: '',
-                cnpj: '',
-                email: '',
-                endereco: '',
+                descricao: '',
+                valor: 0,
+                tipo: 'receita',
+                data: new Date().toISOString().split('T')[0],
+                categoria: '',
                 observacoes: ''
             });
-
-            onSuccess();
+            toast.success(transacao ? "Transação atualizada com sucesso!" : "Transação criada com sucesso!", { id: toastId });
+            if (onSuccess) onSuccess();
         } catch (error) {
-            console.error("Erro ao salvar fornecedor:", error);
+            console.error("Erro ao salvar transação:", error);
+            toast.error(`Erro ao salvar transação: ${error.message || 'Erro desconhecido'}`, { id: toastId });
+        } finally {
+            setIsSaving(false);
         }
-
-        setIsSaving(false);
     };
+
+    const Icon = formData.tipo === 'receita' ? TrendingUp : TrendingDown;
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="max-w-2xl">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <Building2 className="w-6 h-6" />
-                        Novo Fornecedor
+                        <Icon className="w-6 h-6" />
+                        {transacao ? 'Editar Transação' : 'Nova Transação Financeira'}
                     </DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <Label htmlFor="nome_fornecedor">Nome do Fornecedor *</Label>
-                            <Input
-                                id="nome_fornecedor"
-                                value={formData.nome_fornecedor}
-                                onChange={(e) => setFormData({ ...formData, nome_fornecedor: e.target.value })}
-                                placeholder="Nome da empresa"
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <Label htmlFor="contato">Contato *</Label>
-                            <Input
-                                id="contato"
-                                value={formData.contato}
-                                onChange={(e) => setFormData({ ...formData, contato: e.target.value })}
-                                placeholder="(11) 99999-9999"
-                                required
-                            />
-                        </div>
+                    <div>
+                        <Label htmlFor="descricao">Descrição *</Label>
+                        <Input
+                            id="descricao"
+                            value={formData.descricao}
+                            onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                            placeholder="Ex: Pagamento de fornecedor, Receita de serviço"
+                            required
+                        />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <Label htmlFor="cnpj">CNPJ</Label>
+                            <Label htmlFor="valor">Valor (R$) *</Label>
                             <Input
-                                id="cnpj"
-                                value={formData.cnpj}
-                                onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
-                                placeholder="00.000.000/0001-00"
+                                id="valor"
+                                type="number"
+                                step="0.01"
+                                value={formData.valor}
+                                onChange={(e) => setFormData({ ...formData, valor: parseFloat(e.target.value) || 0 })}
+                                placeholder="0,00"
+                                required
                             />
                         </div>
-
                         <div>
-                            <Label htmlFor="email">Email</Label>
+                            <Label htmlFor="tipo">Tipo *</Label>
+                            <Select value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })} required>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="receita">
+                                        <span className="flex items-center gap-2"><TrendingUp className="w-4 h-4 text-green-600" /> Receita</span>
+                                    </SelectItem>
+                                    <SelectItem value="despesa">
+                                        <span className="flex items-center gap-2"><TrendingDown className="w-4 h-4 text-red-600" /> Despesa</span>
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label htmlFor="data">Data *</Label>
                             <Input
-                                id="email"
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                placeholder="contato@fornecedor.com"
+                                id="data"
+                                type="date"
+                                value={formData.data}
+                                onChange={(e) => setFormData({ ...formData, data: e.target.value })}
+                                required
                             />
                         </div>
                     </div>
 
                     <div>
-                        <Label htmlFor="endereco">Endereço</Label>
+                        <Label htmlFor="categoria">Categoria</Label>
                         <Input
-                            id="endereco"
-                            value={formData.endereco}
-                            onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
-                            placeholder="Endereço completo"
+                            id="categoria"
+                            value={formData.categoria}
+                            onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
+                            placeholder="Ex: Material de escritório, Venda de peças"
                         />
                     </div>
 
@@ -128,7 +163,7 @@ export default function FornecedorModal({ isOpen, onClose, onSuccess }) {
                             id="observacoes"
                             value={formData.observacoes}
                             onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                            placeholder="Observações sobre o fornecedor..."
+                            placeholder="Detalhes adicionais sobre a transação..."
                             className="h-20"
                         />
                     </div>
@@ -140,10 +175,10 @@ export default function FornecedorModal({ isOpen, onClose, onSuccess }) {
                         <Button
                             type="submit"
                             disabled={isSaving}
-                            className="bg-green-600 hover:bg-green-700"
+                            className={formData.tipo === 'receita' ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}
                         >
                             <Save className="w-4 h-4 mr-2" />
-                            {isSaving ? 'Salvando...' : 'Criar Fornecedor'}
+                            {isSaving ? 'Salvando...' : transacao ? 'Atualizar' : 'Criar Transação'}
                         </Button>
                     </div>
                 </form>

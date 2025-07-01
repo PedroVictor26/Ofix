@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, User, Car, Phone, Mail, MapPin } from "lucide-react";
+import { Plus, Search, User, Car, Phone, Mail, MapPin, AlertCircle, RefreshCw } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Importe os modais e componentes de detalhes
 import ClienteModal from "../components/clientes/ClienteModal";
@@ -24,6 +25,7 @@ export default function Clientes() {
     const [showDetalhes, setShowDetalhes] = useState(false);
     const [editingCliente, setEditingCliente] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         loadData();
@@ -31,8 +33,8 @@ export default function Clientes() {
 
     const loadData = async () => {
         setIsLoading(true);
+        setError(null);
         try {
-            // CORREÇÃO: Removido o parâmetro da chamada `Cliente.list`
             const [clientesData, veiculosData, servicosData] = await Promise.all([
                 Cliente.list(),
                 Veiculo.list(),
@@ -42,13 +44,13 @@ export default function Clientes() {
             setClientes(clientesData);
             setVeiculos(veiculosData);
             setServicos(servicosData);
-        } catch (error) {
-            console.error("Erro ao carregar dados:", error);
+        } catch (err) {
+            console.error("Erro ao carregar dados da página de clientes:", err);
+            setError(err.message || "Falha ao carregar dados. Tente novamente.");
         }
         setIsLoading(false);
     };
 
-    // CORREÇÃO: Filtro robusto que verifica a existência das propriedades
     const filteredClientes = clientes.filter(cliente => {
         const termoBusca = searchTerm.toLowerCase();
 
@@ -98,10 +100,70 @@ export default function Clientes() {
         return servicos.filter(s => s.cliente_id === clienteId);
     };
 
+    if (error) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-red-50 p-4">
+                <div className="bg-white p-8 rounded-lg shadow-xl text-center">
+                    <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-semibold text-red-700 mb-2">Oops! Algo deu errado.</h2>
+                    <p className="text-slate-600 mb-4">Não foi possível carregar os dados dos clientes.</p>
+                    <p className="text-sm text-slate-500 mb-6">Erro: {error}</p>
+                    <Button onClick={loadData} className="bg-red-600 hover:bg-red-700">
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Tentar Novamente
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    // Skeleton para o header da página e busca
+    const PageHeaderSkeleton = () => (
+        <>
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                <div>
+                    <Skeleton className="h-10 w-72 mb-2" />
+                    <Skeleton className="h-6 w-96" />
+                </div>
+                <Skeleton className="h-12 w-48" /> {/* Botão Novo Cliente */}
+            </div>
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+                <CardContent className="p-6">
+                    <Skeleton className="h-12 w-full" /> {/* Input de Busca */}
+                </CardContent>
+            </Card>
+        </>
+    );
+
+    // Skeleton para um card de cliente
+    const ClienteCardSkeleton = () => (
+        <Card>
+            <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-4 flex-1">
+                        <Skeleton className="w-16 h-16 rounded-full" />
+                        <div className="flex-1 space-y-2">
+                            <Skeleton className="h-6 w-1/2" /> {/* Nome */}
+                            <Skeleton className="h-4 w-full" /> {/* Detalhes */}
+                            <Skeleton className="h-4 w-3/4" />
+                        </div>
+                    </div>
+                    <div className="text-right space-y-2">
+                        <Skeleton className="h-5 w-24" /> {/* Badges */}
+                        <Skeleton className="h-5 w-20" />
+                        <Skeleton className="h-8 w-20 mt-2" /> {/* Botão Editar */}
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+
     return (
         <div className="p-6 space-y-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
             <div className="max-w-7xl mx-auto space-y-8">
-                {/* Header */}
+                {isLoading && !clientes.length ? <PageHeaderSkeleton /> : (
+                    <>
+                        {/* Header */}
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                     <div>
                         <h1 className="text-4xl font-bold text-slate-900 mb-2">Gestão de Clientes</h1>
@@ -134,18 +196,8 @@ export default function Clientes() {
 
                 {/* Lista de Clientes */}
                 <div className="grid gap-6">
-                    {isLoading ? (
-                        Array(3).fill(0).map((_, i) => (
-                            <Card key={i} className="animate-pulse">
-                                <CardContent className="p-6 flex items-center gap-4">
-                                    <div className="w-16 h-16 bg-slate-200 rounded-full" />
-                                    <div className="flex-1 space-y-2">
-                                        <div className="h-4 bg-slate-200 rounded w-1/3" />
-                                        <div className="h-3 bg-slate-200 rounded w-full" />
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))
+                    {isLoading && !clientes.length ? (
+                        Array(3).fill(0).map((_, i) => <ClienteCardSkeleton key={i} />)
                     ) : (
                         filteredClientes.map((cliente) => {
                             const clienteVeiculos = getClienteVeiculos(cliente.id);
@@ -220,18 +272,28 @@ export default function Clientes() {
                     )}
                 </div>
 
-                {filteredClientes.length === 0 && !isLoading && (
-                    <Card className="text-center py-12">
+                {filteredClientes.length === 0 && !isLoading && !error && (
+                    <Card className="text-center py-12 bg-white/80 backdrop-blur-sm border-0 shadow-lg">
                         <CardContent>
                             <User className="w-16 h-16 mx-auto mb-4 text-slate-400" />
                             <h3 className="text-xl font-semibold text-slate-900 mb-2">Nenhum cliente encontrado</h3>
                             <p className="text-slate-600 mb-4">
-                                {searchTerm ? 'Tente ajustar os termos de busca' : 'Comece adicionando seu primeiro cliente'}
+                                {searchTerm ? 'Tente ajustar os termos de busca.' : 'Comece adicionando seu primeiro cliente.'}
                             </p>
-                            {!searchTerm && <Button onClick={handleNewCliente}><Plus className="w-4 h-4 mr-2" />Adicionar Cliente</Button>}
+                            {!searchTerm && (
+                                <Button
+                                    onClick={handleNewCliente}
+                                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Adicionar Cliente
+                                </Button>
+                            )}
                         </CardContent>
                     </Card>
                 )}
+                </>
+            )}
             </div>
 
             {/* Modals */}

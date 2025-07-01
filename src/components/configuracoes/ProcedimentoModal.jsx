@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import {
     Dialog,
     DialogContent,
@@ -49,11 +50,12 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
         e.preventDefault();
 
         if (!formData.nome_procedimento || !formData.descricao_padrao) {
-            alert("Preencha os campos obrigatórios!");
+            toast.error("Preencha os campos obrigatórios: Nome do Procedimento e Descrição Padrão.");
             return;
         }
 
         setIsSaving(true);
+        const toastId = toast.loading(procedimento ? "Atualizando procedimento..." : "Criando procedimento...");
 
         try {
             if (procedimento) {
@@ -61,13 +63,14 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
             } else {
                 await ProcedimentoPadrao.create(formData);
             }
-
+            toast.success(procedimento ? "Procedimento atualizado com sucesso!" : "Procedimento criado com sucesso!", { id: toastId });
             onSuccess();
         } catch (error) {
             console.error("Erro ao salvar procedimento:", error);
+            toast.error(`Erro ao salvar procedimento: ${error.message || 'Erro desconhecido'}`, { id: toastId });
+        } finally {
+            setIsSaving(false);
         }
-
-        setIsSaving(false);
     };
 
     const addChecklistItem = () => {
