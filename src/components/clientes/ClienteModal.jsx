@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+// CÓDIGO CORRIGIDO E FINAL PARA ClienteModal.jsx
+
+import React, { useState, useEffect } from 'react'; // Adicionado useEffect para mais robustez
 import {
     Dialog,
     DialogContent,
@@ -13,21 +15,49 @@ import { Cliente } from "../../entities/mock-data";
 import { Save, User } from "lucide-react";
 
 export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
+    
+    // ============================ CORREÇÃO 1: Usar 'nome' em vez de 'nome_completo' ============================
     const [formData, setFormData] = useState({
-        nome_completo: cliente?.nome_completo || '',
-        cpf_cnpj: cliente?.cpf_cnpj || '',
-        telefone: cliente?.telefone || '',
-        email: cliente?.email || '',
-        endereco: cliente?.endereco || '',
-        observacoes: cliente?.observacoes || ''
+        nome: '', // CORRIGIDO
+        cpf_cnpj: '',
+        telefone: '',
+        email: '',
+        endereco: '',
+        observacoes: ''
     });
 
     const [isSaving, setIsSaving] = useState(false);
 
+    // Este useEffect garante que o formulário carregue os dados corretos para edição e limpe para criação
+    useEffect(() => {
+        if (cliente) {
+            setFormData({
+                nome: cliente.nome || '', // CORRIGIDO (Lendo a propriedade correta)
+                cpf_cnpj: cliente.cpf_cnpj || '',
+                telefone: cliente.telefone || '',
+                email: cliente.email || '',
+                endereco: cliente.endereco || '',
+                observacoes: cliente.observacoes || ''
+            });
+        } else {
+            // Limpa o formulário se for um novo cliente
+            setFormData({
+                nome: '',
+                cpf_cnpj: '',
+                telefone: '',
+                email: '',
+                endereco: '',
+                observacoes: ''
+            });
+        }
+    }, [cliente, isOpen]);
+
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.nome_completo || !formData.telefone) {
+        // ============================ CORREÇÃO 2: Validar o campo 'nome' ============================
+        if (!formData.nome || !formData.telefone) { // CORRIGIDO
             alert("Preencha os campos obrigatórios!");
             return;
         }
@@ -40,27 +70,18 @@ export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
             } else {
                 await Cliente.create(formData);
             }
-
-            setFormData({
-                nome_completo: '',
-                cpf_cnpj: '',
-                telefone: '',
-                email: '',
-                endereco: '',
-                observacoes: ''
-            });
-
-            onSuccess();
+            onSuccess(); // Chama a função para fechar o modal e atualizar a lista
         } catch (error) {
             console.error("Erro ao salvar cliente:", error);
+        } finally {
+            setIsSaving(false);
         }
-
-        setIsSaving(false);
     };
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl">
+            {/* Mantivemos o fundo branco que você já tinha e gostava */}
+            <DialogContent className="bg-white border shadow-xl max-w-2xl">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                         <User className="w-6 h-6" />
@@ -71,11 +92,12 @@ export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="nome_completo">Nome Completo *</Label>
+                            {/* ============================ CORREÇÃO 3: Atualizar o Input do nome ============================ */}
+                            <Label htmlFor="nome">Nome Completo *</Label>
                             <Input
-                                id="nome_completo"
-                                value={formData.nome_completo}
-                                onChange={(e) => setFormData({ ...formData, nome_completo: e.target.value })}
+                                id="nome" // CORRIGIDO
+                                value={formData.nome} // CORRIGIDO
+                                onChange={(e) => setFormData({ ...formData, nome: e.target.value })} // CORRIGIDO
                                 placeholder="Nome completo do cliente"
                                 required
                             />
@@ -92,6 +114,7 @@ export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
                         </div>
                     </div>
 
+                    {/* O resto do formulário continua igual */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="telefone">Telefone *</Label>
@@ -103,7 +126,6 @@ export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
                                 required
                             />
                         </div>
-
                         <div>
                             <Label htmlFor="email">Email</Label>
                             <Input
@@ -115,7 +137,6 @@ export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
                             />
                         </div>
                     </div>
-
                     <div>
                         <Label htmlFor="endereco">Endereço</Label>
                         <Input
@@ -125,7 +146,6 @@ export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
                             placeholder="Endereço completo"
                         />
                     </div>
-
                     <div>
                         <Label htmlFor="observacoes">Observações</Label>
                         <Textarea
