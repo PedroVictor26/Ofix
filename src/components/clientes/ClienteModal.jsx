@@ -22,9 +22,9 @@ const FormError = ({ message }) => (
 );
 
 export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
-    const [formData, setFormData] = useState({});
     const [errors, setErrors] = useState({});
     const [isSaving, setIsSaving] = useState(false);
+    const [formData, setFormData] = useState({});
 
     // Efeito para inicializar ou resetar o formulário quando o cliente ou o estado de abertura mudam
     useEffect(() => {

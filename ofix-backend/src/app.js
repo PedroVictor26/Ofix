@@ -14,6 +14,10 @@ class Application {
   setupMiddlewares() {
     this.server.use(cors()); // Em produção, configure origins específicos: cors({ origin: process.env.FRONTEND_URL })
     this.server.use(express.json()); // Para parsear JSON no corpo das requisições
+    this.server.use((req, res, next) => {
+      console.log(`Requisição recebida: ${req.method} ${req.url}`);
+      next();
+    });
   }
 
   setupRoutes() {
