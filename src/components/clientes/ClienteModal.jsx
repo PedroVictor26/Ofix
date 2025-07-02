@@ -1,3 +1,4 @@
+// CÓDIGO CORRIGIDO E FINAL PARA ClienteModal.jsx // Adicionado useEffect para mais robustez
 import React, { useState, useEffect } from 'react';
 import {
     Dialog,
@@ -16,15 +17,10 @@ import { Save, User } from "lucide-react";
 // import { useToast } from "@/components/ui/use-toast";
 
 export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
-    // const { toast } = useToast(); // Para notificações
+
+    // ============================ CORREÇÃO 1: Usar 'nome' em vez de 'nome_completo' ============================
     const [formData, setFormData] = useState({
-        nome_completo: '',
-        cpf_cnpj: '',
-        telefone: '',
-        email: '',
-        endereco: '',
-        observacoes: ''
-    });
+        nome: '', // CORRIGIDO
 
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState(null);
@@ -57,14 +53,39 @@ export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
     }, [isOpen, cliente]);
 
 
+    // Este useEffect garante que o formulário carregue os dados corretos para edição e limpe para criação
+    useEffect(() => {
+        if (cliente) {
+            setFormData({
+                nome: cliente.nome || '', // CORRIGIDO (Lendo a propriedade correta)
+                cpf_cnpj: cliente.cpf_cnpj || '',
+                telefone: cliente.telefone || '',
+                email: cliente.email || '',
+                endereco: cliente.endereco || '',
+                observacoes: cliente.observacoes || ''
+            });
+        } else {
+            // Limpa o formulário se for um novo cliente
+            setFormData({
+                nome: '',
+                cpf_cnpj: '',
+                telefone: '',
+                email: '',
+                endereco: '',
+                observacoes: ''
+            });
+        }
+    }, [cliente, isOpen]);
+
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null); // Limpa erro anterior
 
-        if (!formData.nome_completo || !formData.telefone) {
-            // alert("Preencha os campos obrigatórios: Nome Completo e Telefone.");
-            setError("Preencha os campos obrigatórios: Nome Completo e Telefone.");
-            // toast({ title: "Erro de Validação", description: "Nome Completo e Telefone são obrigatórios.", variant: "destructive" });
+        // ============================ CORREÇÃO 2: Validar o campo 'nome' ============================
+        if (!formData.nome || !formData.telefone) { // CORRIGIDO
+            alert("Preencha os campos obrigatórios!");
+
             return;
         }
 
@@ -83,32 +104,21 @@ export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
                 response = await apiClient.post('/clientes', formData);
             }
 
-            // Resetar o formulário no frontend
-            // setFormData({
-            //     nome_completo: '', cpf_cnpj: '', telefone: '', email: '',
-            //     endereco: '', observacoes: ''
-            // });
+            onSuccess(); // Chama a função para fechar o modal e atualizar a lista
+        } catch (error) {
+            console.error("Erro ao salvar cliente:", error);
 
-            onSuccess(response?.data); // Chama onSuccess com o cliente criado/atualizado
-            // onClose(); // Fechar o modal é geralmente responsabilidade do onSuccess ou do componente pai
-
-            // toast({ title: "Sucesso!", description: `Cliente ${cliente ? 'atualizado' : 'criado'} com sucesso.`, variant: "success" });
-
-        } catch (err) {
-            console.error("Erro ao salvar cliente:", err);
-            const errorMessage = err.response?.data?.error || err.message || "Erro desconhecido ao salvar cliente.";
-            setError(errorMessage);
-            // toast({ title: "Erro ao Salvar", description: errorMessage, variant: "destructive" });
         } finally {
             setIsSaving(false);
         }
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => {
-            if (!open) onClose(); // Chama onClose quando o dialog tenta fechar
-        }}>
-            <DialogContent className="max-w-2xl">
+
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            {/* Mantivemos o fundo branco que você já tinha e gostava */}
+            <DialogContent className="bg-white border shadow-xl max-w-2xl">
+
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                         <User className="w-6 h-6" />
@@ -125,11 +135,12 @@ export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="nome_completo">Nome Completo *</Label>
+                            {/* ============================ CORREÇÃO 3: Atualizar o Input do nome ============================ */}
+                            <Label htmlFor="nome">Nome Completo *</Label>
                             <Input
-                                id="nome_completo"
-                                value={formData.nome_completo}
-                                onChange={(e) => setFormData({ ...formData, nome_completo: e.target.value })}
+                                id="nome" // CORRIGIDO
+                                value={formData.nome} // CORRIGIDO
+                                onChange={(e) => setFormData({ ...formData, nome: e.target.value })} // CORRIGIDO
                                 placeholder="Nome completo do cliente"
                                 required
                                 disabled={isSaving}
@@ -148,6 +159,7 @@ export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
                         </div>
                     </div>
 
+                    {/* O resto do formulário continua igual */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <Label htmlFor="telefone">Telefone *</Label>
@@ -160,7 +172,6 @@ export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
                                 disabled={isSaving}
                             />
                         </div>
-
                         <div>
                             <Label htmlFor="email">Email</Label>
                             <Input
@@ -173,7 +184,6 @@ export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
                             />
                         </div>
                     </div>
-
                     <div>
                         <Label htmlFor="endereco">Endereço</Label>
                         <Input
@@ -184,7 +194,6 @@ export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
                             disabled={isSaving}
                         />
                     </div>
-
                     <div>
                         <Label htmlFor="observacoes">Observações</Label>
                         <Textarea
