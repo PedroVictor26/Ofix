@@ -6,8 +6,22 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite" // Já está correto
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum ServiceStatus {
+  AGUARDANDO
+  EM_ANDAMENTO
+  AGUARDANDO_PECAS
+  AGUARDANDO_APROVACAO
+  FINALIZADO
+  CANCELADO
 }
 
 // Autenticação e Usuários
@@ -16,8 +30,7 @@ model User {
   nome      String
   email     String   @unique
   password  String
-  // CORREÇÃO: 'enum' não é suportado, trocado para String
-  role      String   @default("USER")
+  role      UserRole @default(ADMIN)
   oficinaId String?
   oficina   Oficina? @relation(fields: [oficinaId], references: [id])
   servicos  Servico[]
@@ -26,26 +39,24 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
-// CORREÇÃO: Bloco 'enum' removido pois não é suportado pelo SQLite
-
 model Oficina {
-  id        String   @id @default(uuid())
-  nome      String
-  cnpj      String?  @unique
-  telefone  String?
-  endereco  String?
+  id                   String               @id @default(uuid())
+  nome                 String
+  cnpj                 String?              @unique
+  telefone             String?
+  endereco             String?
   
-  users     User[]
-  clientes  Cliente[]
-  veiculos  Veiculo[]
-  servicos  Servico[]
-  pecas     Peca[]
-  fornecedores Fornecedor[]
-  procedimentosPadrao ProcedimentoPadrao[]
-  mensagensPadrao   MensagemPadrao[]
+  users                User[]
+  clientes             Cliente[]
+  veiculos             Veiculo[]
+  servicos             Servico[]
+  pecas                Peca[]
+  fornecedores         Fornecedor[]
+  procedimentosPadrao  ProcedimentoPadrao[]
+  mensagensPadrao      MensagemPadrao[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
 }
 
 // Clientes e Veículos
@@ -92,74 +103,68 @@ model Veiculo {
 
 // Serviços
 model Servico {
-  id                  String   @id @default(uuid())
-  numeroOs            String   @unique
-  // CORREÇÃO: 'enum' não é suportado, trocado para String
-  status              String   @default("AGUARDANDO")
+  id                  String        @id @default(uuid())
+  numeroOs            String        @unique
+  status              ServiceStatus @default(AGUARDANDO)
   descricaoProblema   String?
   descricaoSolucao    String?
-  dataEntrada         DateTime @default(now())
+  dataEntrada         DateTime      @default(now())
   dataPrevisaoEntrega DateTime?
   dataConclusao       DateTime?
   dataEntregaCliente  DateTime?
-  // CORREÇÃO: 'Decimal' não é suportado, trocado para Float
-  valorTotalEstimado  Float?
-  valorTotalServicos  Float?
-  valorTotalPecas     Float?
-  valorTotalFinal     Float?
+  valorTotalEstimado  Decimal?
+  valorTotalServicos  Decimal?
+  valorTotalPecas     Decimal?
+  valorTotalFinal     Decimal?
   kmEntrada           Int?
-  // CORREÇÃO: 'Json' não é suportado, trocado para String
-  checklist           String?
+  checklist           Json?
   observacoes         String?
 
   clienteId           String
-  cliente             Cliente  @relation(fields: [clienteId], references: [id])
+  cliente             Cliente       @relation(fields: [clienteId], references: [id])
 
   veiculoId           String
-  veiculo             Veiculo  @relation(fields: [veiculoId], references: [id])
+  veiculo             Veiculo       @relation(fields: [veiculoId], references: [id])
 
   responsavelId       String?
-  responsavel         User?     @relation(fields: [responsavelId], references: [id])
+  responsavel         User?         @relation(fields: [responsavelId], references: [id])
 
   oficinaId           String
-  oficina             Oficina  @relation(fields: [oficinaId], references: [id])
+  oficina             Oficina       @relation(fields: [oficinaId], references: [id])
 
   itensPeca           ItemServicoPeca[]
   procedimentos       ProcedimentoPadraoServico[]
   mensagens           MensagemServico[]
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 }
-
-// CORREÇÃO: Bloco 'enum' removido pois não é suportado pelo SQLite
 
 // Peças e Fornecedores
 model Peca {
-  id              String   @id @default(uuid())
-  codigoInterno   String?  @unique
+  id               String              @id @default(uuid())
+  codigoInterno    String?             @unique
   codigoFabricante String?
-  nome            String
-  descricao       String?
-  fabricante      String?
-  unidadeMedida   String   @default("UN")
-  // CORREÇÃO: 'Decimal' não é suportado, trocado para Float
-  precoCusto      Float?
-  precoVenda      Float
-  estoqueAtual    Int      @default(0)
-  estoqueMinimo   Int?     @default(0)
-  localizacao     String?
+  nome             String
+  descricao        String?
+  fabricante       String?
+  unidadeMedida    String              @default("UN")
+  precoCusto       Decimal?
+  precoVenda       Decimal
+  estoqueAtual     Int                 @default(0)
+  estoqueMinimo    Int?                @default(0)
+  localizacao      String?
 
-  oficinaId       String
-  oficina         Oficina  @relation(fields: [oficinaId], references: [id])
+  oficinaId        String
+  oficina          Oficina             @relation(fields: [oficinaId], references: [id])
 
-  fornecedorId    String?
-  fornecedor      Fornecedor? @relation(fields: [fornecedorId], references: [id])
+  fornecedorId     String?
+  fornecedor       Fornecedor?         @relation(fields: [fornecedorId], references: [id])
 
-  servicos        ItemServicoPeca[]
+  servicos         ItemServicoPeca[]
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 }
 
 model Fornecedor {
@@ -181,20 +186,19 @@ model Fornecedor {
 
 // Tabela Pivot para Peças em um Serviço
 model ItemServicoPeca {
-  id          String  @id @default(uuid())
-  servicoId   String
-  servico     Servico @relation(fields: [servicoId], references: [id])
+  id                   String  @id @default(uuid())
+  servicoId            String
+  servico              Servico @relation(fields: [servicoId], references: [id])
 
-  pecaId      String
-  peca        Peca    @relation(fields: [pecaId], references: [id])
+  pecaId               String
+  peca                 Peca    @relation(fields: [pecaId], references: [id])
 
-  quantidade  Int
-  // CORREÇÃO: 'Decimal' não é suportado, trocado para Float
-  precoUnitarioCobrado Float
-  valorTotal           Float
+  quantidade           Int
+  precoUnitarioCobrado Decimal
+  valorTotal           Decimal
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   @@unique([servicoId, pecaId])
 }
@@ -206,10 +210,8 @@ model ProcedimentoPadrao {
   codigo               String?  @unique
   nome                 String
   descricao            String?
-  // CORREÇÃO: 'Decimal' não é suportado, trocado para Float
-  tempoEstimadoHoras   Float?
-  // CORREÇÃO: 'Json' não é suportado, trocado para String
-  checklistJson        String?
+  tempoEstimadoHoras   Decimal?
+  checklistJson        Json?
 
   oficinaId            String
   oficina              Oficina  @relation(fields: [oficinaId], references: [id])
@@ -222,19 +224,19 @@ model ProcedimentoPadrao {
 
 // Tabela Pivot para Procedimentos em um Serviço
 model ProcedimentoPadraoServico {
-  id                  String    @id @default(uuid())
+  id                  String             @id @default(uuid())
   servicoId           String
-  servico             Servico   @relation(fields: [servicoId], references: [id])
+  servico             Servico            @relation(fields: [servicoId], references: [id])
 
   procedimentoPadraoId String
   procedimentoPadrao  ProcedimentoPadrao @relation(fields: [procedimentoPadraoId], references: [id])
 
   observacoes         String?
-  concluido           Boolean   @default(false)
+  concluido           Boolean            @default(false)
   dataConclusao       DateTime?
 
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
 
   @@unique([servicoId, procedimentoPadraoId])
 }

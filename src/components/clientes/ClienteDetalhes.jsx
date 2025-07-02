@@ -1,17 +1,117 @@
-import React from 'react';
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetDescription,
+    SheetFooter,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Car, Wrench, Phone, Mail, MapPin, Plus, Edit } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { Separator } from "@/components/ui/separator";
+import { User, Car, Wrench, Phone, Mail, MapPin, Plus, Edit, Calendar, Hash, ShieldCheck } from "lucide-react";
+
+// Sub-componente para a seção de informações de contato
+const ContactInfo = ({ cliente }) => (
+    <section className="space-y-4">
+        <h3 className="text-lg font-semibold text-slate-800">Informações de Contato</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div className="flex items-start gap-3">
+                <Phone className="w-4 h-4 text-slate-500 mt-1 flex-shrink-0" />
+                <span className="text-slate-700">{cliente.telefone || "Não informado"}</span>
+            </div>
+            <div className="flex items-start gap-3">
+                <Mail className="w-4 h-4 text-slate-500 mt-1 flex-shrink-0" />
+                <span className="text-slate-700 truncate">{cliente.email || "Não informado"}</span>
+            </div>
+            <div className="flex items-start gap-3 sm:col-span-2">
+                <MapPin className="w-4 h-4 text-slate-500 mt-1 flex-shrink-0" />
+                <span className="text-slate-700">{cliente.endereco || "Endereço não informado"}</span>
+            </div>
+        </div>
+    </section>
+);
+
+// Sub-componente para a lista de veículos
+const VeiculosSection = ({ veiculos, onAddVeiculo }) => (
+    <section>
+        <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-slate-800">Veículos ({veiculos.length})</h3>
+            <Button variant="outline" size="sm" onClick={onAddVeiculo}>
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar
+            </Button>
+        </div>
+        <div className="space-y-4">
+            {veiculos.length > 0 ? (
+                veiculos.map(veiculo => (
+                    <div key={veiculo.id} className="p-4 rounded-lg border border-slate-200 bg-slate-50">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <p className="font-bold text-slate-800">{veiculo.modelo}</p>
+                                <p className="text-sm text-slate-500">{veiculo.cor}</p>
+                            </div>
+                            <Badge variant="secondary" className="font-mono text-xs">{veiculo.placa}</Badge>
+                        </div>
+                        <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                            <div className="flex items-center gap-1.5">
+                                <Calendar className="w-3 h-3" />
+                                <span>{veiculo.ano}</span>
+                            </div>
+                        </div>
+                    </div>
+                ))
+            ) : (
+                <div className="text-center py-8 px-4 rounded-lg border-2 border-dashed border-slate-200">
+                    <Car className="w-8 h-8 mx-auto text-slate-400 mb-2" />
+                    <p className="text-sm text-slate-500">Nenhum veículo cadastrado.</p>
+                </div>
+            )}
+        </div>
+    </section>
+);
+
+// Sub-componente para o histórico de serviços
+const ServicosSection = ({ servicos, veiculos }) => (
+    <section>
+        <h3 className="text-lg font-semibold text-slate-800 mb-4">Histórico de Serviços ({servicos.length})</h3>
+        <div className="space-y-4">
+            {servicos.length > 0 ? (
+                servicos.map(servico => {
+                    const veiculo = veiculos.find(v => v.id === servico.veiculo_id);
+                    return (
+                        <div key={servico.id} className="p-4 rounded-lg border border-slate-200 bg-slate-50">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="font-bold text-slate-800">{servico.problema}</p>
+                                    <p className="text-sm text-slate-500">{veiculo ? `${veiculo.modelo} - ${veiculo.placa}` : "Veículo não identificado"}</p>
+                                </div>
+                                <Badge className="capitalize" variant={servico.status === 'finalizado' ? 'success' : 'default'}>
+                                    {servico.status.replace('_', ' ')}
+                                </Badge>
+                            </div>
+                            <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
+                                <div className="flex items-center gap-1.5">
+                                    <Hash className="w-3 h-3" />
+                                    <span>OS: {servico.id}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <Calendar className="w-3 h-3" />
+                                    <span>{servico.data_entrada}</span>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })
+            ) : (
+                <div className="text-center py-8 px-4 rounded-lg border-2 border-dashed border-slate-200">
+                    <Wrench className="w-8 h-8 mx-auto text-slate-400 mb-2" />
+                    <p className="text-sm text-slate-500">Nenhum serviço registrado.</p>
+                </div>
+            )}
+        </div>
+    </section>
+);
 
 export default function ClienteDetalhes({
     isOpen,
@@ -24,213 +124,36 @@ export default function ClienteDetalhes({
 }) {
     if (!cliente) return null;
 
-    const getStatusColor = (status) => {
-        const colors = {
-            aguardando: "bg-slate-100 text-slate-700",
-            em_andamento: "bg-blue-100 text-blue-700",
-            aguardando_pecas: "bg-orange-100 text-orange-700",
-            aguardando_aprovacao: "bg-purple-100 text-purple-700",
-            finalizado: "bg-green-100 text-green-700"
-        };
-        return colors[status] || "bg-slate-100 text-slate-700";
-    };
-
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <div className="flex items-center justify-between">
-                        <DialogTitle className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                            <User className="w-6 h-6" />
-                            {cliente.nome_completo}
-                        </DialogTitle>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onEditCliente(cliente)}
-                            className="flex items-center gap-2"
-                        >
-                            <Edit className="w-4 h-4" />
-                            Editar
-                        </Button>
-                    </div>
-                </DialogHeader>
+        <Sheet open={isOpen} onOpenChange={onClose}>
+            <SheetContent className="w-full sm:max-w-lg bg-white p-0 flex flex-col">
+                <SheetHeader className="p-6">
+                    <SheetTitle className="text-2xl font-bold text-slate-900 flex items-center gap-3">
+                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <User className="w-6 h-6 text-blue-600" />
+                        </div>
+                        {cliente.nome}
+                    </SheetTitle>
+                    <SheetDescription>
+                        Detalhes do cliente, veículos e histórico de serviços.
+                    </SheetDescription>
+                </SheetHeader>
 
-                <div className="space-y-6">
-                    {/* Informações do Cliente */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <User className="w-5 h-5" />
-                                Informações do Cliente
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {cliente.telefone && (
-                                    <div className="flex items-center gap-2">
-                                        <Phone className="w-4 h-4 text-blue-500" />
-                                        <span>{cliente.telefone}</span>
-                                    </div>
-                                )}
-
-                                {cliente.email && (
-                                    <div className="flex items-center gap-2">
-                                        <Mail className="w-4 h-4 text-blue-500" />
-                                        <span>{cliente.email}</span>
-                                    </div>
-                                )}
-
-                                {cliente.cpf_cnpj && (
-                                    <div>
-                                        <span className="font-medium">CPF/CNPJ:</span> {cliente.cpf_cnpj}
-                                    </div>
-                                )}
-
-                                {cliente.endereco && (
-                                    <div className="flex items-start gap-2 md:col-span-2">
-                                        <MapPin className="w-4 h-4 text-blue-500 mt-0.5" />
-                                        <span>{cliente.endereco}</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {cliente.observacoes && (
-                                <div className="mt-4 pt-4 border-t">
-                                    <p className="text-sm text-slate-600">{cliente.observacoes}</p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Tabs */}
-                    <Tabs defaultValue="veiculos" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="veiculos" className="flex items-center gap-2">
-                                <Car className="w-4 h-4" />
-                                Veículos ({veiculos.length})
-                            </TabsTrigger>
-                            <TabsTrigger value="servicos" className="flex items-center gap-2">
-                                <Wrench className="w-4 h-4" />
-                                Histórico ({servicos.length})
-                            </TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="veiculos" className="mt-6">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-semibold">Veículos</h3>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={onAddVeiculo}
-                                    className="flex items-center gap-2"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    Adicionar Veículo
-                                </Button>
-                            </div>
-
-                            {veiculos.length === 0 ? (
-                                <Card className="text-center py-8">
-                                    <CardContent>
-                                        <Car className="w-12 h-12 mx-auto mb-3 text-slate-400" />
-                                        <p className="text-slate-600 mb-4">Nenhum veículo cadastrado</p>
-                                        <Button onClick={onAddVeiculo} size="sm">
-                                            <Plus className="w-4 h-4 mr-2" />
-                                            Adicionar Primeiro Veículo
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            ) : (
-                                <div className="grid gap-4">
-                                    {veiculos.map((veiculo) => (
-                                        <Card key={veiculo.id}>
-                                            <CardContent className="pt-6">
-                                                <div className="flex items-start justify-between">
-                                                    <div>
-                                                        <h4 className="font-semibold text-lg">
-                                                            {veiculo.marca} {veiculo.modelo}
-                                                        </h4>
-                                                        <div className="text-sm text-slate-600 space-y-1 mt-2">
-                                                            <div><span className="font-medium">Placa:</span> {veiculo.placa}</div>
-                                                            <div><span className="font-medium">Ano:</span> {veiculo.ano}</div>
-                                                            {veiculo.cor && (
-                                                                <div><span className="font-medium">Cor:</span> {veiculo.cor}</div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                {veiculo.observacoes && (
-                                                    <div className="mt-3 pt-3 border-t">
-                                                        <p className="text-sm text-slate-600">{veiculo.observacoes}</p>
-                                                    </div>
-                                                )}
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                </div>
-                            )}
-                        </TabsContent>
-
-                        <TabsContent value="servicos" className="mt-6">
-                            <h3 className="text-lg font-semibold mb-4">Histórico de Serviços</h3>
-
-                            {servicos.length === 0 ? (
-                                <Card className="text-center py-8">
-                                    <CardContent>
-                                        <Wrench className="w-12 h-12 mx-auto mb-3 text-slate-400" />
-                                        <p className="text-slate-600">Nenhum serviço realizado ainda</p>
-                                    </CardContent>
-                                </Card>
-                            ) : (
-                                <div className="space-y-4">
-                                    {servicos.map((servico) => {
-                                        const veiculo = veiculos.find(v => v.id === servico.veiculo_id);
-                                        return (
-                                            <Card key={servico.id}>
-                                                <CardContent className="pt-6">
-                                                    <div className="flex items-start justify-between mb-3">
-                                                        <div>
-                                                            <h4 className="font-semibold">OS #{servico.numero_os}</h4>
-                                                            {veiculo && (
-                                                                <p className="text-sm text-slate-600">
-                                                                    {veiculo.marca} {veiculo.modelo} - {veiculo.placa}
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                        <Badge className={getStatusColor(servico.status)}>
-                                                            {servico.status?.replace('_', ' ')}
-                                                        </Badge>
-                                                    </div>
-
-                                                    {servico.descricao_problema && (
-                                                        <p className="text-sm text-slate-600 mb-2">
-                                                            {servico.descricao_problema}
-                                                        </p>
-                                                    )}
-
-                                                    <div className="flex items-center justify-between text-xs text-slate-500">
-                                                        <span>
-                                                            {servico.data_entrada &&
-                                                                format(new Date(servico.data_entrada), "dd/MM/yyyy", { locale: ptBR })
-                                                            }
-                                                        </span>
-                                                        {servico.valor_total > 0 && (
-                                                            <span className="font-medium text-green-600">
-                                                                R$ {servico.valor_total.toFixed(2)}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </TabsContent>
-                    </Tabs>
+                <div className="px-6 pb-6 space-y-6 overflow-y-auto flex-1">
+                    <ContactInfo cliente={cliente} />
+                    <Separator />
+                    <VeiculosSection veiculos={veiculos} onAddVeiculo={onAddVeiculo} />
+                    <Separator />
+                    <ServicosSection servicos={servicos} veiculos={veiculos} />
                 </div>
-            </DialogContent>
-        </Dialog>
+
+                <SheetFooter className="p-6 bg-slate-50 border-t border-slate-200">
+                    <Button variant="outline" onClick={() => onEditCliente(cliente)}>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Editar Cliente
+                    </Button>
+                </SheetFooter>
+            </SheetContent>
+        </Sheet>
     );
 }

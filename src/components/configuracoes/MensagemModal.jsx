@@ -1,69 +1,72 @@
-import React, { useState, useEffect } from 'react';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from 'react';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
+    DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MensagemPadrao } from "../../entities/mock-data";
-import { Save, MessageCircle } from "lucide-react";
+import { Save, Loader2, AlertCircle } from "lucide-react";
+
+const FormError = ({ message }) => (
+    <div className="flex items-center gap-2 text-sm text-red-600 mt-1">
+        <AlertCircle className="w-4 h-4" />
+        <span>{message}</span>
+    </div>
+);
 
 export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) {
-    const [formData, setFormData] = useState({
-        nome_mensagem: '',
-        texto_mensagem: '',
-        categoria: 'status_update',
-        variaveis_disponiveis: []
-    });
-
+    const [formData, setFormData] = useState({});
+    const [errors, setErrors] = useState({});
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
-        if (mensagem) {
+        if (isOpen) {
             setFormData({
-                nome_mensagem: mensagem.nome_mensagem || '',
-                texto_mensagem: mensagem.texto_mensagem || '',
-                categoria: mensagem.categoria || 'status_update',
-                variaveis_disponiveis: mensagem.variaveis_disponiveis || []
+                nome: mensagem?.nome || '',
+                texto: mensagem?.texto || '',
+                categoria: mensagem?.categoria || 'status_update',
             });
-        } else {
-            setFormData({
-                nome_mensagem: '',
-                texto_mensagem: '',
-                categoria: 'status_update',
-                variaveis_disponiveis: ['{cliente_nome}', '{veiculo_modelo}', '{numero_os}', '{data_previsao}']
-            });
+            setErrors({});
         }
-    }, [mensagem, isOpen]);
+    }, [isOpen, mensagem]);
+
+    const handleInputChange = (e) => {
+        const { id, value } = e.target;
+        setFormData(prev => ({ ...prev, [id]: value }));
+        if (errors[id]) setErrors(prev => ({ ...prev, [id]: null }));
+    };
+
+    const handleSelectChange = (value) => {
+        setFormData(prev => ({ ...prev, categoria: value }));
+    };
+
+    const validateForm = () => {
+        const newErrors = {};
+        if (!formData.nome?.trim()) newErrors.nome = "O nome da mensagem é obrigatório.";
+        if (!formData.texto?.trim()) newErrors.texto = "O texto da mensagem é obrigatório.";
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        if (!formData.nome_mensagem || !formData.texto_mensagem) {
-            toast.error("Preencha os campos obrigatórios: Nome da Mensagem e Texto da Mensagem.");
-            return;
-        }
+        if (!validateForm()) return;
 
         setIsSaving(true);
-        const toastId = toast.loading(mensagem ? "Atualizando mensagem..." : "Criando mensagem...");
-
         try {
-            if (mensagem) {
-                await MensagemPadrao.update(mensagem.id, formData);
-            } else {
-                await MensagemPadrao.create(formData);
-            }
-            toast.success(mensagem ? "Mensagem atualizada com sucesso!" : "Mensagem criada com sucesso!", { id: toastId });
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            console.log("Salvando mensagem:", formData);
             onSuccess();
+            onClose();
         } catch (error) {
             console.error("Erro ao salvar mensagem:", error);
-            toast.error(`Erro ao salvar mensagem: ${error.message || 'Erro desconhecido'}`, { id: toastId });
         } finally {
             setIsSaving(false);
         }
@@ -90,94 +93,74 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
     ];
 
     const inserirVariavel = (variavel) => {
-        const textarea = document.getElementById('texto_mensagem');
+        const textarea = document.getElementById('texto'); // ID do textarea
+        if (!textarea) return;
+
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        const text = formData.texto_mensagem;
-        const before = text.substring(0, start);
-        const after = text.substring(end, text.length);
+        const text = formData.texto || '';
+        const newText = text.substring(0, start) + variavel + text.substring(end);
 
-        setFormData({
-            ...formData,
-            texto_mensagem: before + variavel + after
-        });
+        setFormData(prev => ({ ...prev, texto: newText }));
+
+        // Foca e posiciona o cursor após a variável inserida
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + variavel.length, start + variavel.length);
+        }, 0);
     };
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="bg-white sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <MessageCircle className="w-6 h-6" />
-                        {mensagem ? 'Editar Mensagem' : 'Nova Mensagem'}
+                    <DialogTitle className="text-2xl font-bold text-slate-800">
+                        {mensagem ? 'Editar Mensagem' : 'Nova Mensagem Padrão'}
                     </DialogTitle>
+                    <DialogDescription>
+                        Crie ou edite um template de mensagem para comunicação com clientes.
+                    </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <Label htmlFor="nome_mensagem">Nome da Mensagem *</Label>
-                            <Input
-                                id="nome_mensagem"
-                                value={formData.nome_mensagem}
-                                onChange={(e) => setFormData({ ...formData, nome_mensagem: e.target.value })}
-                                placeholder="Ex: Serviço Concluído"
-                                required
-                            />
+                <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+                    <div className="grid sm:grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="nome">Nome da Mensagem *</Label>
+                            <Input id="nome" value={formData.nome} onChange={handleInputChange} placeholder="Ex: Serviço Concluído" className={errors.nome ? "border-red-500" : ""} />
+                            {errors.nome && <FormError message={errors.nome} />}
                         </div>
-
-                        <div>
+                        <div className="grid gap-2">
                             <Label htmlFor="categoria">Categoria</Label>
-                            <Select value={formData.categoria} onValueChange={(value) => setFormData({ ...formData, categoria: value })}>
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
+                            <Select value={formData.categoria} onValueChange={handleSelectChange}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                    {categorias.map((categoria) => (
-                                        <SelectItem key={categoria.value} value={categoria.value}>
-                                            {categoria.label}
-                                        </SelectItem>
-                                    ))}
+                                    {categorias.map(cat => <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </div>
                     </div>
 
-                    <div>
-                        <Label htmlFor="texto_mensagem">Texto da Mensagem *</Label>
-                        <Textarea
-                            id="texto_mensagem"
-                            value={formData.texto_mensagem}
-                            onChange={(e) => setFormData({ ...formData, texto_mensagem: e.target.value })}
-                            placeholder="Olá {cliente_nome}, seu veículo {veiculo_modelo} está pronto..."
-                            className="h-32"
-                            required
-                        />
+                    <div className="grid gap-2">
+                        <Label htmlFor="texto">Texto da Mensagem *</Label>
+                        <Textarea id="texto" value={formData.texto} onChange={handleInputChange} placeholder="Olá {cliente_nome}, seu veículo {veiculo_modelo} está pronto..." className={`h-32 ${errors.texto ? "border-red-500" : ""}`} />
+                        {errors.texto && <FormError message={errors.texto} />}
                     </div>
 
-                    <div>
+                    <div className="grid gap-2">
                         <Label>Variáveis Disponíveis</Label>
-                        <p className="text-sm text-slate-600 mb-2">Clique nas variáveis para inserir no texto:</p>
                         <div className="flex flex-wrap gap-2">
                             {variaveisComuns.map((variavel) => (
-                                <Button
-                                    key={variavel}
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => inserirVariavel(variavel)}
-                                    className="text-xs"
-                                >
+                                <Button key={variavel} type="button" variant="outline" size="sm" onClick={() => inserirVariavel(variavel)} className="text-xs">
                                     {variavel}
                                 </Button>
                             ))}
                         </div>
                     </div>
 
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                        <h4 className="font-medium text-blue-900 mb-2">Preview da Mensagem:</h4>
-                        <p className="text-sm text-blue-800">
-                            {formData.texto_mensagem
+                    <div className="bg-blue-50 p-4 rounded-lg text-blue-900">
+                        <h4 className="font-semibold mb-2">Preview da Mensagem:</h4>
+                        <p className="text-sm">
+                            {(formData.texto || '')
                                 .replace(/{cliente_nome}/g, 'João Silva')
                                 .replace(/{veiculo_modelo}/g, 'Honda Civic')
                                 .replace(/{veiculo_placa}/g, 'ABC-1234')
@@ -188,21 +171,14 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
                             }
                         </p>
                     </div>
-
-                    <div className="flex justify-end gap-3">
-                        <Button type="button" variant="outline" onClick={onClose}>
-                            Cancelar
-                        </Button>
-                        <Button
-                            type="submit"
-                            disabled={isSaving}
-                            className="bg-green-600 hover:bg-green-700"
-                        >
-                            <Save className="w-4 h-4 mr-2" />
-                            {isSaving ? 'Salvando...' : mensagem ? 'Atualizar' : 'Criar Mensagem'}
-                        </Button>
-                    </div>
                 </form>
+
+                <DialogFooter>
+                    <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>Cancelar</Button>
+                    <Button type="submit" onClick={handleSubmit} disabled={isSaving}>
+                        {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4 mr-2" /> Salvar</>}
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

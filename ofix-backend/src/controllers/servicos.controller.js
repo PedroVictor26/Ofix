@@ -10,8 +10,7 @@ class ServicosController {
         observacoes, clienteId, veiculoId, responsavelId
       } = req.body;
 
-      // const oficinaId = req.user?.oficinaId; // Descomentar quando auth estiver pronto
-      const oficinaId = "mock-oficina-id"; // Placeholder - REMOVER EM PRODUÇÃO
+      const oficinaId = req.user?.oficinaId; 
 
       if (!oficinaId) {
         return res.status(401).json({ error: 'Oficina não identificada. Acesso não autorizado.' });
@@ -80,8 +79,7 @@ class ServicosController {
 
   async getAllServicos(req, res, next) {
     try {
-      // const oficinaId = req.user?.oficinaId; // Descomentar quando auth estiver pronto
-      const oficinaId = "mock-oficina-id"; // Placeholder - REMOVER EM PRODUÇÃO
+      const oficinaId = req.user?.oficinaId;
       if (!oficinaId) {
         return res.status(401).json({ error: 'Oficina não identificada.' });
       }
@@ -116,8 +114,8 @@ class ServicosController {
   async getServicoById(req, res, next) {
     try {
       const { id } = req.params;
-      // const oficinaId = req.user?.oficinaId; // Descomentar
-      const oficinaId = "mock-oficina-id"; // Placeholder
+ // Descomentar
+      const oficinaId = req.user?.oficinaId;
       if (!oficinaId) {
         return res.status(401).json({ error: 'Oficina não identificada.' });
       }
@@ -145,8 +143,8 @@ class ServicosController {
   async updateServico(req, res, next) {
     try {
       const { id } = req.params;
-      // const oficinaId = req.user?.oficinaId; // Descomentar
-      const oficinaId = "mock-oficina-id"; // Placeholder
+ // Descomentar
+      const oficinaId = req.user?.oficinaId;
       if (!oficinaId) {
         return res.status(401).json({ error: 'Oficina não identificada.' });
       }
@@ -212,8 +210,8 @@ class ServicosController {
   async deleteServico(req, res, next) {
     try {
       const { id } = req.params;
-      // const oficinaId = req.user?.oficinaId; // Descomentar
-      const oficinaId = "mock-oficina-id"; // Placeholder
+ // Descomentar
+      const oficinaId = req.user?.oficinaId;
       if (!oficinaId) {
         return res.status(401).json({ error: 'Oficina não identificada.' });
       }

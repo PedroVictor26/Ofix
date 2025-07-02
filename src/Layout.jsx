@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link, useLocation, Outlet } from "react-router-dom";
 import {
     LayoutDashboard,
@@ -6,8 +6,6 @@ import {
     Package,
     DollarSign,
     Settings,
-    Menu,
-    X,
     Wrench,
     Bell,
     Search,
@@ -105,48 +103,8 @@ export default function Layout() {
                 }}
             />
             <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-blue-50">
-                {/* Estilos CSS customizados */}
-                <style>
-                    {`
-                        :root {
-                            --primary-blue: #2563eb;
-                            --primary-blue-light: #3b82f6;
-                            --primary-blue-dark: #1d4ed8;
-                            --accent-orange: #f59e0b;
-                            --background-gradient: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
-                            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-                            --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-                        }
-                        
-                        .sidebar-transition {
-                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                        }
-                        
-                        .nav-item-active {
-                            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-                            border-left: 4px solid #2563eb;
-                            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
-                        }
-                        
-                        .nav-item-hover:hover {
-                            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-                            transform: translateX(2px);
-                        }
-                        
-                        .status-badge {
-                            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-                        }
-                        
-                        @keyframes pulse {
-                            0%, 100% {
-                                opacity: 1;
-                            }
-                            50% {
-                                opacity: .8;
-                            }
-                        }
-                    `}
-                </style>
+                
+                
 
                 {/* Sidebar fixa */}
                 <Sidebar className="border-r border-slate-200/60 bg-white/95 backdrop-blur-md shadow-xl z-20 fixed h-full w-64">

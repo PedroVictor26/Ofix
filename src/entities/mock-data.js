@@ -1,16 +1,16 @@
 // src/entities/mock-data.js
 
-// Dados Falsos
 const mockClientes = [
-    { id: 1, nome: "João Silva Santos", telefone: "11999991234" },
-    { id: 2, nome: "Maria Oliveira", telefone: "21988885678" },
+    { id: 1, nome: "João da Silva", email: "joao.silva@example.com", telefone: "11999998888", endereco: "Rua das Flores, 123" },
+    { id: 2, nome: "Maria Oliveira", email: "maria.oliveira@example.com", telefone: "21987654321", endereco: "Avenida Principal, 456" },
 ];
 
 const mockVeiculos = [
-    { id: 1, cliente_id: 1, marca: "Toyota", modelo: "Corolla", placa: "ABC-1234" },
-    { id: 2, cliente_id: 2, marca: "Honda", modelo: "Civic", placa: "XYZ-5678" },
+    { id: 1, cliente_id: 1, modelo: "Toyota Corolla", placa: "ABC1234", ano: 2022, cor: "Preto" },
+    { id: 2, cliente_id: 2, modelo: "Honda Civic", placa: "XYZ5678", ano: 2023, cor: "Branco" },
 ];
 
+// Dados Falsos
 const mockServicos = [
     { id: 'OS001', cliente_id: 1, veiculo_id: 1, status: 'aguardando_pecas', problema: 'Troca das Carlotas', progresso: 1, total_passos: 6, data_entrada: '25/06/2025' },
     { id: 'OS002', cliente_id: 2, veiculo_id: 2, status: 'em_andamento', problema: 'Revisão completa de freios', progresso: 3, total_passos: 5, data_entrada: '26/06/2025' },
@@ -49,16 +49,16 @@ const mockItemServico = [
     { id: 2, servico_id: "OS002", peca_id: 2, quantidade: 1 },
 ];
 // Funções Falsas que Simulam a API
-export const Servico = {
-    list: () => Promise.resolve(mockServicos),
-};
-
 export const Cliente = {
     list: () => Promise.resolve(mockClientes),
 };
 
 export const Veiculo = {
     list: () => Promise.resolve(mockVeiculos),
+};
+
+export const Servico = {
+    list: () => Promise.resolve(mockServicos),
 };
 
 export const ProcedimentoPadrao = {

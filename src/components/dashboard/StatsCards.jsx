@@ -1,28 +1,36 @@
-import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { motion } from "framer-motion";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default function StatsCards({ title, value, icon: Icon, gradient }) {
+// Skeleton para o StatsCard
+export const StatsCardSkeleton = () => (
+    <Card className="border-slate-200 shadow-sm">
+        <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-8 w-12" />
+                </div>
+                <Skeleton className="w-10 h-10 rounded-lg" />
+            </div>
+        </CardContent>
+    </Card>
+);
+
+// Componente StatsCards com design refinado
+export default function StatsCards({ title, value, icon: Icon, color = "text-slate-600", bgColor = "bg-slate-100" }) {
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-        >
-            <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white/80 backdrop-blur-sm">
-                <div className={`absolute top-0 right-0 w-20 h-20 transform translate-x-6 -translate-y-6 bg-gradient-to-r ${gradient} rounded-full opacity-10`} />
-                <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{title}</p>
-                            <p className="text-2xl font-bold text-slate-900 mt-1">{value}</p>
-                        </div>
-                        <div className={`p-3 rounded-xl bg-gradient-to-r ${gradient} bg-opacity-20`}>
-                            <Icon className={`w-5 h-5 text-white`} />
-                        </div>
+        <Card className="bg-white border border-slate-200 shadow-sm rounded-xl">
+            <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">{title}</p>
+                        <p className="text-3xl font-bold text-slate-800 mt-1">{value}</p>
                     </div>
-                </CardContent>
-            </Card>
-        </motion.div>
+                    <div className={`p-3 rounded-lg ${bgColor}`}>
+                        <Icon className={`w-6 h-6 ${color}`} />
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
     );
 }

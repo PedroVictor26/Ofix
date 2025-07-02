@@ -1,80 +1,82 @@
-import React, { useState } from 'react';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from 'react';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
+    DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Peca } from "../../entities/mock-data";
-import { Save, Package } from "lucide-react";
+import { Save, Loader2, AlertCircle } from "lucide-react";
+
+const FormError = ({ message }) => (
+    <div className="flex items-center gap-2 text-sm text-red-600 mt-1">
+        <AlertCircle className="w-4 h-4" />
+        <span>{message}</span>
+    </div>
+);
 
 export default function PecaModal({ isOpen, onClose, peca, fornecedores, onSuccess }) {
-    const [formData, setFormData] = useState({
-        nome_peca: peca?.nome_peca || '',
-        codigo_sku: peca?.codigo_sku || '',
-        fabricante: peca?.fabricante || '',
-        fornecedor_id: peca?.fornecedor_id || '',
-        preco_custo: peca?.preco_custo || 0,
-        preco_venda: peca?.preco_venda || 0,
-        quantidade_estoque: peca?.quantidade_estoque || 0,
-        estoque_minimo: peca?.estoque_minimo || 1,
-        categoria: peca?.categoria || 'outros'
-    });
-
+    const [formData, setFormData] = useState({});
+    const [errors, setErrors] = useState({});
     const [isSaving, setIsSaving] = useState(false);
 
-    const categorias = [
-        { value: "motor", label: "Motor" },
-        { value: "suspensao", label: "Suspensão" },
-        { value: "freios", label: "Freios" },
-        { value: "eletrica", label: "Elétrica" },
-        { value: "transmissao", label: "Transmissão" },
-        { value: "carroceria", label: "Carroceria" },
-        { value: "pneus", label: "Pneus" },
-        { value: "filtros", label: "Filtros" },
-        { value: "fluidos", label: "Fluidos" },
-        { value: "outros", label: "Outros" }
-    ];
+    useEffect(() => {
+        if (isOpen) {
+            setFormData({
+                nome: peca?.nome || '',
+                sku: peca?.sku || '',
+                fabricante: peca?.fabricante || '',
+                fornecedor_id: peca?.fornecedor_id || null,
+                preco_custo: peca?.preco_custo || 0,
+                preco_venda: peca?.preco_venda || 0,
+                quantidade: peca?.quantidade || 0,
+                estoque_minimo: peca?.estoque_minimo || 1,
+            });
+            setErrors({});
+        }
+    }, [isOpen, peca]);
+
+    const handleInputChange = (e) => {
+        const { id, value } = e.target;
+        setFormData(prev => ({ ...prev, [id]: value }));
+        if (errors[id]) {
+            setErrors(prev => ({ ...prev, [id]: null }));
+        }
+    };
+
+    const handleSelectChange = (id, value) => {
+        setFormData(prev => ({ ...prev, [id]: value }));
+        if (errors[id]) {
+            setErrors(prev => ({ ...prev, [id]: null }));
+        }
+    };
+
+    const validateForm = () => {
+        const newErrors = {};
+        if (!formData.nome?.trim()) newErrors.nome = "O nome da peça é obrigatório.";
+        if (!formData.sku?.trim()) newErrors.sku = "O SKU é obrigatório.";
+        if (formData.preco_venda <= 0) newErrors.preco_venda = "O preço de venda deve ser positivo.";
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        if (!formData.nome_peca || !formData.codigo_sku) {
-            toast.error("Preencha os campos obrigatórios: Nome da Peça e Código SKU.");
-            return;
-        }
+        if (!validateForm()) return;
 
         setIsSaving(true);
-        const toastId = toast.loading(peca ? "Atualizando peça..." : "Criando peça...");
-
         try {
-            if (peca) {
-                await Peca.update(peca.id, formData);
-            } else {
-                await Peca.create(formData);
-            }
-
-            setFormData({
-                nome_peca: '',
-                codigo_sku: '',
-                fabricante: '',
-                fornecedor_id: '',
-                preco_custo: 0,
-                preco_venda: 0,
-                quantidade_estoque: 0,
-                estoque_minimo: 1,
-                categoria: 'outros'
-            });
-            toast.success(peca ? "Peça atualizada com sucesso!" : "Peça criada com sucesso!", { id: toastId });
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            console.log("Salvando peça:", formData);
             onSuccess();
+            onClose();
         } catch (error) {
             console.error("Erro ao salvar peça:", error);
-            toast.error(`Erro ao salvar peça: ${error.message || 'Erro desconhecido'}`, { id: toastId });
         } finally {
             setIsSaving(false);
         }
@@ -82,147 +84,76 @@ export default function PecaModal({ isOpen, onClose, peca, fornecedores, onSucce
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-3xl">
+            <DialogContent className="bg-white sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <Package className="w-6 h-6" />
-                        {peca ? 'Editar Peça' : 'Nova Peça'}
+                    <DialogTitle className="text-2xl font-bold text-slate-800">
+                        {peca ? 'Editar Peça' : 'Nova Peça no Estoque'}
                     </DialogTitle>
+                    <DialogDescription>
+                        Preencha os detalhes da peça abaixo.
+                    </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <Label htmlFor="nome_peca">Nome da Peça *</Label>
-                            <Input
-                                id="nome_peca"
-                                value={formData.nome_peca}
-                                onChange={(e) => setFormData({ ...formData, nome_peca: e.target.value })}
-                                placeholder="Nome da peça"
-                                required
-                            />
+                <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+                    <div className="grid sm:grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="nome">Nome da Peça *</Label>
+                            <Input id="nome" value={formData.nome} onChange={handleInputChange} placeholder="Ex: Filtro de Óleo" className={errors.nome ? "border-red-500" : ""} />
+                            {errors.nome && <FormError message={errors.nome} />}
                         </div>
-
-                        <div>
-                            <Label htmlFor="codigo_sku">Código SKU *</Label>
-                            <Input
-                                id="codigo_sku"
-                                value={formData.codigo_sku}
-                                onChange={(e) => setFormData({ ...formData, codigo_sku: e.target.value })}
-                                placeholder="SKU123"
-                                required
-                            />
+                        <div className="grid gap-2">
+                            <Label htmlFor="sku">SKU (Código) *</Label>
+                            <Input id="sku" value={formData.sku} onChange={handleInputChange} placeholder="Ex: FO-123" className={errors.sku ? "border-red-500" : ""} />
+                            {errors.sku && <FormError message={errors.sku} />}
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                        <div className="grid gap-2">
                             <Label htmlFor="fabricante">Fabricante</Label>
-                            <Input
-                                id="fabricante"
-                                value={formData.fabricante}
-                                onChange={(e) => setFormData({ ...formData, fabricante: e.target.value })}
-                                placeholder="Nome do fabricante"
-                            />
+                            <Input id="fabricante" value={formData.fabricante} onChange={handleInputChange} placeholder="Ex: Fram" />
                         </div>
-
-                        <div>
+                        <div className="grid gap-2">
                             <Label htmlFor="fornecedor_id">Fornecedor</Label>
-                            <Select value={formData.fornecedor_id} onValueChange={(value) => setFormData({ ...formData, fornecedor_id: value })}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Selecione o fornecedor" />
-                                </SelectTrigger>
+                            <Select value={formData.fornecedor_id} onValueChange={(value) => handleSelectChange('fornecedor_id', value)}>
+                                <SelectTrigger><SelectValue placeholder="Selecione um fornecedor" /></SelectTrigger>
                                 <SelectContent>
-                                    {fornecedores.map((fornecedor) => (
-                                        <SelectItem key={fornecedor.id} value={fornecedor.id}>
-                                            {fornecedor.nome_fornecedor}
-                                        </SelectItem>
-                                    ))}
+                                    {fornecedores?.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <Label htmlFor="preco_custo">Preço de Custo</Label>
-                            <Input
-                                id="preco_custo"
-                                type="number"
-                                step="0.01"
-                                value={formData.preco_custo}
-                                onChange={(e) => setFormData({ ...formData, preco_custo: parseFloat(e.target.value) || 0 })}
-                                placeholder="0,00"
-                            />
+                    <div className="grid sm:grid-cols-2 gap-4">
+                         <div className="grid gap-2">
+                            <Label htmlFor="preco_custo">Preço de Custo (R$)</Label>
+                            <Input id="preco_custo" type="number" value={formData.preco_custo} onChange={handleInputChange} placeholder="0.00" />
                         </div>
-
-                        <div>
-                            <Label htmlFor="preco_venda">Preço de Venda</Label>
-                            <Input
-                                id="preco_venda"
-                                type="number"
-                                step="0.01"
-                                value={formData.preco_venda}
-                                onChange={(e) => setFormData({ ...formData, preco_venda: parseFloat(e.target.value) || 0 })}
-                                placeholder="0,00"
-                            />
+                        <div className="grid gap-2">
+                            <Label htmlFor="preco_venda">Preço de Venda (R$) *</Label>
+                            <Input id="preco_venda" type="number" value={formData.preco_venda} onChange={handleInputChange} placeholder="0.00" className={errors.preco_venda ? "border-red-500" : ""} />
+                            {errors.preco_venda && <FormError message={errors.preco_venda} />}
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <Label htmlFor="quantidade_estoque">Quantidade em Estoque</Label>
-                            <Input
-                                id="quantidade_estoque"
-                                type="number"
-                                min="0"
-                                value={formData.quantidade_estoque}
-                                onChange={(e) => setFormData({ ...formData, quantidade_estoque: parseInt(e.target.value) || 0 })}
-                            />
+                     <div className="grid sm:grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="quantidade">Quantidade em Estoque</Label>
+                            <Input id="quantidade" type="number" value={formData.quantidade} onChange={handleInputChange} placeholder="0" />
                         </div>
-
-                        <div>
+                        <div className="grid gap-2">
                             <Label htmlFor="estoque_minimo">Estoque Mínimo</Label>
-                            <Input
-                                id="estoque_minimo"
-                                type="number"
-                                min="0"
-                                value={formData.estoque_minimo}
-                                onChange={(e) => setFormData({ ...formData, estoque_minimo: parseInt(e.target.value) || 1 })}
-                            />
+                            <Input id="estoque_minimo" type="number" value={formData.estoque_minimo} onChange={handleInputChange} placeholder="0" />
                         </div>
-
-                        <div>
-                            <Label htmlFor="categoria">Categoria</Label>
-                            <Select value={formData.categoria} onValueChange={(value) => setFormData({ ...formData, categoria: value })}>
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {categorias.map((categoria) => (
-                                        <SelectItem key={categoria.value} value={categoria.value}>
-                                            {categoria.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-
-                    <div className="flex justify-end gap-3">
-                        <Button type="button" variant="outline" onClick={onClose}>
-                            Cancelar
-                        </Button>
-                        <Button
-                            type="submit"
-                            disabled={isSaving}
-                            className="bg-green-600 hover:bg-green-700"
-                        >
-                            <Save className="w-4 h-4 mr-2" />
-                            {isSaving ? 'Salvando...' : peca ? 'Atualizar' : 'Criar Peça'}
-                        </Button>
                     </div>
                 </form>
+
+                <DialogFooter>
+                    <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>Cancelar</Button>
+                    <Button type="submit" onClick={handleSubmit} disabled={isSaving}>
+                        {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4 mr-2" /> Salvar</>}
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

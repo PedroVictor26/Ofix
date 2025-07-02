@@ -1,13 +1,10 @@
 // src/App.jsx
-import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast'; // Adicionado para notificações
+import { Toaster } from 'react-hot-toast';
 
-// Importe o AuthProvider e o ProtectedRoute
 import { AuthProvider } from './context/AuthContext.jsx';
 import ProtectedRoute from './components/auth/ProtectedRoute.jsx';
 
-// Importe suas páginas e o Layout
 import Layout from './Layout';
 import Dashboard from './pages/Dashboard.jsx';
 import Clientes from './pages/Clientes.jsx';

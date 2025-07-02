@@ -1,57 +1,67 @@
-import React, { useState } from 'react';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from 'react';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
+    DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Fornecedor } from "../../entities/mock-data";
-import { Save, Building2 } from "lucide-react";
+import { Save, Loader2, AlertCircle } from "lucide-react";
+
+const FormError = ({ message }) => (
+    <div className="flex items-center gap-2 text-sm text-red-600 mt-1">
+        <AlertCircle className="w-4 h-4" />
+        <span>{message}</span>
+    </div>
+);
 
 export default function FornecedorModal({ isOpen, onClose, onSuccess }) {
-    const [formData, setFormData] = useState({
-        nome_fornecedor: '',
-        contato: '',
-        cnpj: '',
-        email: '',
-        endereco: '',
-        observacoes: ''
-    });
-
+    const [formData, setFormData] = useState({});
+    const [errors, setErrors] = useState({});
     const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setFormData({
+                nome: '',
+                contato: '',
+                email: '',
+            });
+            setErrors({});
+        }
+    }, [isOpen]);
+
+    const handleInputChange = (e) => {
+        const { id, value } = e.target;
+        setFormData(prev => ({ ...prev, [id]: value }));
+        if (errors[id]) {
+            setErrors(prev => ({ ...prev, [id]: null }));
+        }
+    };
+
+    const validateForm = () => {
+        const newErrors = {};
+        if (!formData.nome?.trim()) newErrors.nome = "O nome do fornecedor é obrigatório.";
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        if (!formData.nome_fornecedor || !formData.contato) {
-            toast.error("Preencha os campos obrigatórios: Nome do Fornecedor e Contato.");
-            return;
-        }
+        if (!validateForm()) return;
 
         setIsSaving(true);
-        const toastId = toast.loading("Salvando fornecedor...");
-
         try {
-            await Fornecedor.create(formData);
-
-            setFormData({
-                nome_fornecedor: '',
-                contato: '',
-                cnpj: '',
-                email: '',
-                endereco: '',
-                observacoes: ''
-            });
-            toast.success("Fornecedor salvo com sucesso!", { id: toastId });
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            console.log("Salvando fornecedor:", formData);
             onSuccess();
+            onClose();
         } catch (error) {
             console.error("Erro ao salvar fornecedor:", error);
-            toast.error(`Erro ao salvar fornecedor: ${error.message || 'Erro desconhecido'}`, { id: toastId });
         } finally {
             setIsSaving(false);
         }
@@ -59,97 +69,36 @@ export default function FornecedorModal({ isOpen, onClose, onSuccess }) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="bg-white sm:max-w-lg">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <Building2 className="w-6 h-6" />
-                        Novo Fornecedor
-                    </DialogTitle>
+                    <DialogTitle className="text-2xl font-bold text-slate-800">Novo Fornecedor</DialogTitle>
+                    <DialogDescription>
+                        Adicione um novo fornecedor para associar às suas peças.
+                    </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <Label htmlFor="nome_fornecedor">Nome do Fornecedor *</Label>
-                            <Input
-                                id="nome_fornecedor"
-                                value={formData.nome_fornecedor}
-                                onChange={(e) => setFormData({ ...formData, nome_fornecedor: e.target.value })}
-                                placeholder="Nome da empresa"
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <Label htmlFor="contato">Contato *</Label>
-                            <Input
-                                id="contato"
-                                value={formData.contato}
-                                onChange={(e) => setFormData({ ...formData, contato: e.target.value })}
-                                placeholder="(11) 99999-9999"
-                                required
-                            />
-                        </div>
+                <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="nome">Nome do Fornecedor *</Label>
+                        <Input id="nome" value={formData.nome} onChange={handleInputChange} placeholder="Ex: AutoPeças Brasil" className={errors.nome ? "border-red-500" : ""} />
+                        {errors.nome && <FormError message={errors.nome} />}
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <Label htmlFor="cnpj">CNPJ</Label>
-                            <Input
-                                id="cnpj"
-                                value={formData.cnpj}
-                                onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
-                                placeholder="00.000.000/0001-00"
-                            />
-                        </div>
-
-                        <div>
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                placeholder="contato@fornecedor.com"
-                            />
-                        </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="contato">Telefone de Contato</Label>
+                        <Input id="contato" value={formData.contato} onChange={handleInputChange} placeholder="(11) 99999-8888" />
                     </div>
-
-                    <div>
-                        <Label htmlFor="endereco">Endereço</Label>
-                        <Input
-                            id="endereco"
-                            value={formData.endereco}
-                            onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
-                            placeholder="Endereço completo"
-                        />
-                    </div>
-
-                    <div>
-                        <Label htmlFor="observacoes">Observações</Label>
-                        <Textarea
-                            id="observacoes"
-                            value={formData.observacoes}
-                            onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                            placeholder="Observações sobre o fornecedor..."
-                            className="h-20"
-                        />
-                    </div>
-
-                    <div className="flex justify-end gap-3">
-                        <Button type="button" variant="outline" onClick={onClose}>
-                            Cancelar
-                        </Button>
-                        <Button
-                            type="submit"
-                            disabled={isSaving}
-                            className="bg-green-600 hover:bg-green-700"
-                        >
-                            <Save className="w-4 h-4 mr-2" />
-                            {isSaving ? 'Salvando...' : 'Criar Fornecedor'}
-                        </Button>
+                    <div className="grid gap-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input id="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="contato@autopecas.com" />
                     </div>
                 </form>
+
+                <DialogFooter>
+                    <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>Cancelar</Button>
+                    <Button type="submit" onClick={handleSubmit} disabled={isSaving}>
+                        {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4 mr-2" /> Salvar</>}
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

@@ -1,6 +1,4 @@
-// src/components/dashboard/NewServiceModal.jsx
-
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -87,7 +85,7 @@ export default function NewServiceModal({ isOpen, onClose, onSuccess: reloadDash
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="bg-white text-black dark:bg-white dark:text-black p-6 rounded-xl shadow-xl max-w-3xl">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                         <Plus className="w-6 h-6" />

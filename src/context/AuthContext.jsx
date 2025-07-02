@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as authService from '../services/auth.service.js'; // Nossos serviços de autenticação
 import { useNavigate } from 'react-router-dom'; // Para redirecionamento programático
 
@@ -80,8 +80,6 @@ export const AuthProvider = ({ children }) => {
       // Pode-se optar por logar automaticamente ou redirecionar para a página de login
       // Aqui, apenas retornamos os dados e o componente de Registro decide o que fazer (ex: mostrar mensagem)
       return data;
-    } catch (error) {
-      throw error; // Relança para o componente de Registro tratar
     } finally {
       setIsLoadingAuth(false);
     }

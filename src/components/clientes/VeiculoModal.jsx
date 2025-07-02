@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import toast from 'react-hot-toast';
 import {
     Dialog,
@@ -62,7 +62,7 @@ export default function VeiculoModal({ isOpen, onClose, clienteId, onSuccess }) 
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="bg-white text-black dark:bg-white dark:text-black p-6 rounded-xl shadow-xl max-w-3xl">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                         <Car className="w-6 h-6" />

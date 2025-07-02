@@ -1,18 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-// Button não parece ser usado diretamente aqui, mas pode estar nos subcomponentes
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// Mock data não será mais usado para update, usaremos o service
-import * as servicosService from '../../services/servicos.service.js'; // Importar o service
-// Manter mocks para ProcedimentoPadrao, MensagemPadrao, Peca por enquanto
+import * as servicosService from '../../services/servicos.service.js';
 import { ProcedimentoPadrao, MensagemPadrao, Peca } from "../../entities/mock-data";
-import { Wrench, MessageCircle, Package, FileText } from "lucide-react"; // Save pode não ser necessário aqui se for por subcomponente
+import { Wrench, MessageCircle, Package, FileText } from "lucide-react";
 import toast from 'react-hot-toast';
 
 import ServiceDetails from './ServiceDetails';
