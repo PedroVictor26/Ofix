@@ -49,22 +49,26 @@ model Oficina {
 }
 
 // Clientes e Veículos
-model Cliente {
-  id            String    @id @default(uuid())
-  nomeCompleto  String
-  cpfCnpj       String?   @unique
-  telefone      String?
-  email         String?   @unique
-  endereco      String?
-  
-  oficinaId     String
-  oficina       Oficina   @relation(fields: [oficinaId], references: [id])
+// ARQUIVO: ofix-backend/prisma/schema.prisma
 
+// ARQUIVO: ofix-backend/prisma/schema.prisma
+
+// ARQUIVO: ofix-backend/prisma/schema.prisma
+
+model Cliente {
+  // --- Seus campos existentes ---
+  id            String   @id @default(uuid())
+  nomeCompleto  String
+  // ...
+  observacoes   String?
   veiculos      Veiculo[]
   servicos      Servico[]
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+
+  // --- ADICIONE ESTAS DUAS LINHAS PARA CONECTAR À OFICINA ---
+  oficina       Oficina @relation(fields: [oficinaId], references: [id])
+  oficinaId     String
+  // -------------------------------------------------------------
 }
 
 model Veiculo {

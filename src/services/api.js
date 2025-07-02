@@ -5,7 +5,7 @@ import axios from 'axios';
 // CORREÇÃO: Usando import.meta.env, que é a forma do Vite acessar variáveis de ambiente.
 // Garanta que você tem um arquivo .env na raiz do seu projeto front-end com a linha:
 // VITE_API_BASE_URL=http://localhost:3333/api
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3333/api';
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3333';
 
 const apiClient = axios.create({
   baseURL: API_URL,
