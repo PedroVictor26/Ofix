@@ -16,7 +16,7 @@ import RegisterPage from './pages/RegisterPage.jsx';
 
 export default function App() {
   return (
-    <BrowserRouter future={{ v7_startTransition: true }}>
+    <BrowserRouter future={{ v7_relativeSplatPath: true }}>
       <AuthProvider>
         {/* O Toaster para notificações globais */}
         <Toaster position="top-right" />

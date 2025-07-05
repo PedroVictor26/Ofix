@@ -8,7 +8,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as servicosService from '../../services/servicos.service.js';
-import { ProcedimentoPadrao, MensagemPadrao, Peca } from "../../entities/mock-data";
+import { getAllProcedimentos } from '../../services/procedimentos.service';
+import { getAllMensagens } from '../../services/mensagens.service';
+import { getAllPecas } from '../../services/pecas.service';
 import { Wrench, MessageCircle, Package, FileText } from "lucide-react";
 import toast from 'react-hot-toast';
 
@@ -26,27 +28,26 @@ export default function ServiceModal({ isOpen, onClose, service, onUpdate, clien
 
     useEffect(() => {
         if (isOpen && service) {
+            const loadData = async () => {
+                setIsLoading(true);
+                try {
+                    const [procedimentosData, mensagensData, pecasData] = await Promise.all([
+                        getAllProcedimentos(),
+                        getAllMensagens(),
+                        getAllPecas()
+                    ]);
+
+                    setProcedimentos(procedimentosData);
+                    setMensagens(mensagensData);
+                    setPecas(pecasData);
+                } catch (error) {
+                    console.error("Erro ao carregar dados:", error);
+                }
+                setIsLoading(false);
+            };
             loadData();
         }
     }, [isOpen, service]);
-
-    const loadData = async () => {
-        setIsLoading(true);
-        try {
-            const [procedimentosData, mensagensData, pecasData] = await Promise.all([
-                ProcedimentoPadrao.list(),
-                MensagemPadrao.list(),
-                Peca.list()
-            ]);
-
-            setProcedimentos(procedimentosData);
-            setMensagens(mensagensData);
-            setPecas(pecasData);
-        } catch (error) {
-            console.error("Erro ao carregar dados:", error);
-        }
-        setIsLoading(false);
-    };
 
     // onUpdate agora é reloadDashboard
     const handleServiceUpdate = async (updatedData) => {
@@ -73,15 +74,19 @@ export default function ServiceModal({ isOpen, onClose, service, onUpdate, clien
         }
     };
 
-    if (!service) return null;
+    console.log("📦 Dados recebidos no modal:", { service, isOpen });
+    if (!isOpen || !service) return null;
 
     // Clientes e Veiculos agora são mapas/objetos
-    const cliente = clientes[service.cliente_id];
-    const veiculo = veiculos[service.veiculo_id];
+    const cliente = clientes[service.clienteId];
+    const veiculo = veiculos.find(v =>
+        v.id === service.veiculoId ||
+        v.id === service.veiculo?.id
+    );
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent aria-describedby="service-dialog-desc" className="bg-white text-black dark:bg-white dark:text-black p-6 rounded-xl shadow-xl max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <div className="flex items-center justify-between">
                         <DialogTitle className="text-2xl font-bold text-slate-900">
@@ -92,6 +97,9 @@ export default function ServiceModal({ isOpen, onClose, service, onUpdate, clien
                         </Badge>
                     </div>
                 </DialogHeader>
+                <p id="service-dialog-desc" className="sr-only">
+    Detalhes do serviço selecionado
+  </p>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <TabsList className="grid w-full grid-cols-4">

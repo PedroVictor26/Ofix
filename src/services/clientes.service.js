@@ -53,3 +53,24 @@ export const deleteCliente = async (id) => {
     throw error.response?.data || { message: error.message || `Erro ao deletar cliente ${id}.` };
   }
 };
+
+export const createVeiculo = async (clienteId, veiculoData) => {
+  if (!clienteId || !veiculoData) throw new Error("ID do cliente e dados do veículo são obrigatórios.");
+  try {
+    const response = await apiClient.post(`/clientes/${clienteId}/veiculos`, veiculoData);
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao criar veículo:", error.response?.data?.error || error.message);
+    throw error.response?.data || { message: error.message || "Erro desconhecido ao criar veículo." };
+  }
+};
+
+export const getAllVeiculos = async () => {
+  try {
+    const response = await apiClient.get('/veiculos'); // Assumindo que você tem uma rota /veiculos no backend
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao buscar veículos:", error.response?.data?.error || error.message);
+    throw error.response?.data || { message: error.message || "Erro desconhecido ao buscar veículos." };
+  }
+};

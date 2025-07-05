@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import * as pecasService from '@/services/pecas.service.js';
 import { Save, Loader2, AlertCircle } from "lucide-react";
 
 const FormError = ({ message }) => (
@@ -20,23 +21,25 @@ const FormError = ({ message }) => (
     </div>
 );
 
+const getInitialFormData = (peca) => ({
+    nome: peca?.nome || '',
+    sku: peca?.sku || '',
+    fabricante: peca?.fabricante || '',
+    fornecedorId: peca?.fornecedorId || '',
+    precoCusto: peca?.precoCusto || 0,
+    precoVenda: peca?.precoVenda || 0,
+    quantidade: peca?.quantidade || 0,
+    estoqueMinimo: peca?.estoqueMinimo || 1,
+});
+
 export default function PecaModal({ isOpen, onClose, peca, fornecedores, onSuccess }) {
-    const [formData, setFormData] = useState({});
+    const [formData, setFormData] = useState(getInitialFormData(peca));
     const [errors, setErrors] = useState({});
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
-            setFormData({
-                nome: peca?.nome || '',
-                sku: peca?.sku || '',
-                fabricante: peca?.fabricante || '',
-                fornecedor_id: peca?.fornecedor_id || null,
-                preco_custo: peca?.preco_custo || 0,
-                preco_venda: peca?.preco_venda || 0,
-                quantidade: peca?.quantidade || 0,
-                estoque_minimo: peca?.estoque_minimo || 1,
-            });
+            setFormData(getInitialFormData(peca));
             setErrors({});
         }
     }, [isOpen, peca]);
@@ -71,8 +74,11 @@ export default function PecaModal({ isOpen, onClose, peca, fornecedores, onSucce
 
         setIsSaving(true);
         try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            console.log("Salvando peça:", formData);
+            if (peca) {
+                await pecasService.updatePeca(peca.id, formData);
+            } else {
+                await pecasService.createPeca(formData);
+            }
             onSuccess();
             onClose();
         } catch (error) {
@@ -114,8 +120,8 @@ export default function PecaModal({ isOpen, onClose, peca, fornecedores, onSucce
                             <Input id="fabricante" value={formData.fabricante} onChange={handleInputChange} placeholder="Ex: Fram" />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="fornecedor_id">Fornecedor</Label>
-                            <Select value={formData.fornecedor_id} onValueChange={(value) => handleSelectChange('fornecedor_id', value)}>
+                            <Label htmlFor="fornecedorId">Fornecedor</Label>
+                            <Select value={formData.fornecedorId} onValueChange={(value) => handleSelectChange('fornecedorId', value)}>
                                 <SelectTrigger><SelectValue placeholder="Selecione um fornecedor" /></SelectTrigger>
                                 <SelectContent>
                                     {fornecedores?.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
@@ -126,13 +132,13 @@ export default function PecaModal({ isOpen, onClose, peca, fornecedores, onSucce
 
                     <div className="grid sm:grid-cols-2 gap-4">
                          <div className="grid gap-2">
-                            <Label htmlFor="preco_custo">Preço de Custo (R$)</Label>
-                            <Input id="preco_custo" type="number" value={formData.preco_custo} onChange={handleInputChange} placeholder="0.00" />
+                            <Label htmlFor="precoCusto">Preço de Custo (R$)</Label>
+                            <Input id="precoCusto" type="number" value={formData.precoCusto} onChange={handleInputChange} placeholder="0.00" />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="preco_venda">Preço de Venda (R$) *</Label>
-                            <Input id="preco_venda" type="number" value={formData.preco_venda} onChange={handleInputChange} placeholder="0.00" className={errors.preco_venda ? "border-red-500" : ""} />
-                            {errors.preco_venda && <FormError message={errors.preco_venda} />}
+                            <Label htmlFor="precoVenda">Preço de Venda (R$) *</Label>
+                            <Input id="precoVenda" type="number" value={formData.precoVenda} onChange={handleInputChange} placeholder="0.00" className={errors.precoVenda ? "border-red-500" : ""} />
+                            {errors.precoVenda && <FormError message={errors.precoVenda} />}
                         </div>
                     </div>
 
@@ -142,8 +148,8 @@ export default function PecaModal({ isOpen, onClose, peca, fornecedores, onSucce
                             <Input id="quantidade" type="number" value={formData.quantidade} onChange={handleInputChange} placeholder="0" />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="estoque_minimo">Estoque Mínimo</Label>
-                            <Input id="estoque_minimo" type="number" value={formData.estoque_minimo} onChange={handleInputChange} placeholder="0" />
+                            <Label htmlFor="estoqueMinimo">Estoque Mínimo</Label>
+                            <Input id="estoqueMinimo" type="number" value={formData.estoqueMinimo} onChange={handleInputChange} placeholder="0" />
                         </div>
                     </div>
                 </form>

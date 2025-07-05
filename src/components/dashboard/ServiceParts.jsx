@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ItemServico, Peca } from "../../entities/mock-data";
 import { Search, Plus, Package, AlertCircle, Trash2 } from "lucide-react";
+import { createItemServicoPeca } from '../../services/itemServicoPeca.service';
+import { updatePeca } from '../../services/pecas.service';
+import toast from 'react-hot-toast';
 
 export default function ServiceParts({ service, pecas, onUpdate }) {
     const [searchTerm, setSearchTerm] = useState("");
@@ -12,46 +14,49 @@ export default function ServiceParts({ service, pecas, onUpdate }) {
     const [isAdding, setIsAdding] = useState(false);
 
     const filteredPecas = pecas.filter(peca =>
-        peca.nome_peca.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        peca.codigo_sku.toLowerCase().includes(searchTerm.toLowerCase())
+        peca.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        peca.codigoInterno?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        peca.codigoFabricante?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const handleAddPart = async (peca) => {
         const quantidade = selectedQuantities[peca.id] || 1;
 
-        if (quantidade > peca.quantidade_estoque) {
-            alert("Quantidade insuficiente em estoque!");
+        if (quantidade > peca.estoqueAtual) {
+            toast.error("Quantidade insuficiente em estoque!");
             return;
         }
 
         setIsAdding(true);
+        const toastId = toast.loading("Adicionando peça...");
 
         try {
             // Criar item de serviço
-            await ItemServico.create({
-                servico_id: service.id,
-                peca_id: peca.id,
-                quantidade_usada: quantidade,
-                preco_unitario_venda: peca.preco_venda,
-                subtotal: quantidade * peca.preco_venda
+            await createItemServicoPeca({
+                servicoId: service.id,
+                pecaId: peca.id,
+                quantidade: quantidade,
+                precoUnitarioCobrado: peca.precoVenda,
+                valorTotal: quantidade * peca.precoVenda
             });
 
             // Atualizar estoque da peça
-            await Peca.update(peca.id, {
-                quantidade_estoque: peca.quantidade_estoque - quantidade
+            await updatePeca(peca.id, {
+                estoqueAtual: peca.estoqueAtual - quantidade
             });
 
             // Resetar quantidade selecionada
             setSelectedQuantities({ ...selectedQuantities, [peca.id]: 1 });
 
-            // Atualizar o serviço (trigger refresh)
-            await onUpdate({});
+            toast.success("Peça adicionada com sucesso!", { id: toastId });
+            onUpdate(); // Atualizar o serviço (trigger refresh)
 
         } catch (error) {
             console.error("Erro ao adicionar peça:", error);
+            toast.error(`Erro ao adicionar peça: ${error.message || 'Erro desconhecido'}`, { id: toastId });
+        } finally {
+            setIsAdding(false);
         }
-
-        setIsAdding(false);
     };
 
     const setQuantity = (pecaId, quantity) => {
@@ -82,9 +87,9 @@ export default function ServiceParts({ service, pecas, onUpdate }) {
                             <div className="flex items-start justify-between">
                                 <div className="flex-1">
                                     <CardTitle className="text-lg font-semibold text-slate-900">
-                                        {peca.nome_peca}
+                                        {peca.nome}
                                     </CardTitle>
-                                    <p className="text-sm text-slate-500">SKU: {peca.codigo_sku}</p>
+                                    <p className="text-sm text-slate-500">SKU: {peca.codigoInterno || peca.codigoFabricante}</p>
                                     <div className="flex items-center gap-2 mt-2">
                                         {peca.categoria && (
                                             <Badge variant="secondary">
@@ -92,13 +97,13 @@ export default function ServiceParts({ service, pecas, onUpdate }) {
                                             </Badge>
                                         )}
                                         <Badge
-                                            variant={peca.quantidade_estoque <= peca.estoque_minimo ? "destructive" : "outline"}
+                                            variant={peca.estoqueAtual <= peca.estoqueMinimo ? "destructive" : "outline"}
                                             className="flex items-center gap-1"
                                         >
                                             <Package className="w-3 h-3" />
-                                            {peca.quantidade_estoque} em estoque
+                                            {peca.estoqueAtual} em estoque
                                         </Badge>
-                                        {peca.quantidade_estoque <= peca.estoque_minimo && (
+                                        {peca.estoqueAtual <= peca.estoqueMinimo && (
                                             <Badge variant="destructive" className="flex items-center gap-1">
                                                 <AlertCircle className="w-3 h-3" />
                                                 Estoque baixo
@@ -108,10 +113,10 @@ export default function ServiceParts({ service, pecas, onUpdate }) {
                                 </div>
                                 <div className="text-right">
                                     <p className="text-lg font-bold text-green-600">
-                                        R$ {peca.preco_venda?.toFixed(2)}
+                                        R$ {peca.precoVenda?.toFixed(2)}
                                     </p>
                                     <p className="text-sm text-slate-500">
-                                        Custo: R$ {peca.preco_custo?.toFixed(2)}
+                                        Custo: R$ {peca.precoCusto?.toFixed(2)}
                                     </p>
                                 </div>
                             </div>
@@ -123,20 +128,20 @@ export default function ServiceParts({ service, pecas, onUpdate }) {
                                     <Input
                                         type="number"
                                         min="1"
-                                        max={peca.quantidade_estoque}
+                                        max={peca.estoqueAtual}
                                         value={selectedQuantities[peca.id] || 1}
                                         onChange={(e) => setQuantity(peca.id, e.target.value)}
                                         className="w-20"
                                     />
                                 </div>
                                 <div className="text-sm text-slate-600">
-                                    Subtotal: R$ {((selectedQuantities[peca.id] || 1) * peca.preco_venda).toFixed(2)}
+                                    Subtotal: R$ {((selectedQuantities[peca.id] || 1) * peca.precoVenda).toFixed(2)}
                                 </div>
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => handleAddPart(peca)}
-                                    disabled={isAdding || peca.quantidade_estoque === 0}
+                                    disabled={isAdding || peca.estoqueAtual === 0}
                                     className="ml-auto flex items-center gap-2"
                                 >
                                     <Plus className="w-4 h-4" />

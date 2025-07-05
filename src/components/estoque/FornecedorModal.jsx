@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Save, Loader2, AlertCircle } from "lucide-react";
 
+import * as fornecedoresService from "@/services/fornecedores.service.js";
+
 const FormError = ({ message }) => (
     <div className="flex items-center gap-2 text-sm text-red-600 mt-1">
         <AlertCircle className="w-4 h-4" />
@@ -19,18 +21,20 @@ const FormError = ({ message }) => (
     </div>
 );
 
+const initialFormData = {
+    nome: '',
+    contato: '',
+    email: '',
+};
+
 export default function FornecedorModal({ isOpen, onClose, onSuccess }) {
-    const [formData, setFormData] = useState({});
+    const [formData, setFormData] = useState(initialFormData);
     const [errors, setErrors] = useState({});
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
-            setFormData({
-                nome: '',
-                contato: '',
-                email: '',
-            });
+            setFormData(initialFormData); // Reseta o formulário
             setErrors({});
         }
     }, [isOpen]);
@@ -56,10 +60,9 @@ export default function FornecedorModal({ isOpen, onClose, onSuccess }) {
 
         setIsSaving(true);
         try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            console.log("Salvando fornecedor:", formData);
-            onSuccess();
-            onClose();
+            await fornecedoresService.createFornecedor(formData); // Salva no backend
+            onSuccess(); // Aqui o pai pode recarregar a lista
+            onClose();   // Fecha o modal
         } catch (error) {
             console.error("Erro ao salvar fornecedor:", error);
         } finally {

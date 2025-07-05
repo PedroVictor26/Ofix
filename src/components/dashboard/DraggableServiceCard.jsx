@@ -26,12 +26,14 @@ export default function DraggableServiceCard({ id, servico, cliente, veiculo, on
     };
 
     return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners} onClick={(e) => {
+            e.stopPropagation();
+            onClick();
+        }}>
             <ServiceCard
                 servico={servico}
                 cliente={cliente}
                 veiculo={veiculo}
-                onClick={onClick}
             />
         </div>
     );

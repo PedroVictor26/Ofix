@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createProcedimento, updateProcedimento } from '../../services/procedimentos.service';
 import {
     Dialog,
     DialogContent,
@@ -22,7 +23,13 @@ const FormError = ({ message }) => (
 );
 
 export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuccess }) {
-    const [formData, setFormData] = useState({});
+    const [formData, setFormData] = useState({
+        nome: '',
+        descricao: '',
+        checklist: [],
+        tempo_estimado: '',
+        categoria: 'manutencao_preventiva',
+    });
     const [checklistItem, setChecklistItem] = useState('');
     const [errors, setErrors] = useState({});
     const [isSaving, setIsSaving] = useState(false);
@@ -82,12 +89,16 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
 
         setIsSaving(true);
         try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            console.log("Salvando procedimento:", formData);
+            if (procedimento) {
+                await updateProcedimento(procedimento.id, formData);
+            } else {
+                await createProcedimento(formData);
+            }
             onSuccess();
             onClose();
         } catch (error) {
             console.error("Erro ao salvar procedimento:", error);
+            // Optionally, set an error state to display to the user
         } finally {
             setIsSaving(false);
         }

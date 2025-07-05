@@ -56,6 +56,7 @@ model Oficina {
   fornecedores         Fornecedor[]
   procedimentosPadrao  ProcedimentoPadrao[]
   mensagensPadrao      MensagemPadrao[]
+  transacoesFinanceiras Financeiro[] // Adicionado para a relação com Financeiro
 
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
@@ -266,6 +267,23 @@ model MensagemServico {
   tipoEnvio   String
   dataEnvio   DateTime  @default(now())
   enviadoPor  String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Modelo Financeiro
+model Financeiro {
+  id          String    @id @default(uuid())
+  descricao   String
+  valor       Decimal
+  tipo        String // Ex: 'receita', 'despesa'
+  categoria   String?
+  data        DateTime
+  servicoId   String? // Opcional: se a transação estiver ligada a um serviço
+  
+  oficinaId   String
+  oficina     Oficina   @relation(fields: [oficinaId], references: [id])
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

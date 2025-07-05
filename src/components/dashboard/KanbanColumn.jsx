@@ -14,7 +14,7 @@ export default function KanbanColumn({ status, config, servicos, serviceIds, cli
 
     return (
         <div className="flex-shrink-0 w-80">
-            <div className="bg-slate-100 rounded-xl p-4 h-full">
+            <div className="bg-slate-100 rounded-xl p-4">
                 {/* Cabeçalho da Coluna */}
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
@@ -27,16 +27,19 @@ export default function KanbanColumn({ status, config, servicos, serviceIds, cli
                 </div>
 
                 {/* Área dos Cards */}
-                <ScrollArea 
-                    ref={setNodeRef} 
+                <ScrollArea
+                    ref={setNodeRef}
                     className={`h-[calc(100vh-280px)] rounded-md transition-colors duration-200 ${isOver ? 'bg-blue-50' : ''}`}
                 >
                     <SortableContext items={serviceIds || []} strategy={verticalListSortingStrategy}>
                         <div className="space-y-3 p-1">
                             {servicos && servicos.length > 0 ? (
                                 servicos.map((servico) => {
-                                    const cliente = clientes[servico.cliente_id];
-                                    const veiculo = veiculos[servico.veiculo_id];
+                                    const cliente = clientes[servico.clienteId];
+                                    const veiculo = veiculos.find(v =>
+                                        v.id === servico.veiculoId ||
+                                        v.id === servico.veiculo?.id
+                                    );
                                     return (
                                         <DraggableServiceCard
                                             key={servico.id}
@@ -44,7 +47,10 @@ export default function KanbanColumn({ status, config, servicos, serviceIds, cli
                                             servico={servico}
                                             cliente={cliente}
                                             veiculo={veiculo}
-                                            onClick={() => onServiceClick(servico)}
+                                            onClick={() => {
+                                                console.log("Service passed to onClick in KanbanColumn:", servico); // Adicionado para depuração
+                                                onServiceClick(servico);
+                                            }}
                                         />
                                     );
                                 })

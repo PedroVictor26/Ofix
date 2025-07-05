@@ -11,12 +11,12 @@ import { format } from "date-fns";
 
 export default function ServiceDetails({ service, cliente, veiculo, onUpdate }) {
     const [formData, setFormData] = useState({
-        status: service.status || 'aguardando',
-        descricao_problema: service.descricao_problema || '',
-        diagnostico_tecnico: service.diagnostico_tecnico || '',
-        valor_mao_obra: service.valor_mao_obra || 0,
-        data_previsao: service.data_previsao || '',
-        checklist_servico: service.checklist_servico || []
+        status: service.status || 'AGUARDANDO', // Usar o valor do enum
+        descricaoProblema: service.descricaoProblema || '',
+        descricaoSolucao: service.descricaoSolucao || '',
+        valorTotalServicos: service.valorTotalServicos || 0,
+        dataPrevisaoEntrega: service.dataPrevisaoEntrega ? service.dataPrevisaoEntrega.split('T')[0] : '', // Formatar para input type="date"
+        checklist: service.checklist || []
     });
 
     const [isUpdating, setIsUpdating] = useState(false);
@@ -28,16 +28,16 @@ export default function ServiceDetails({ service, cliente, veiculo, onUpdate }) 
     };
 
     const updateChecklistItem = (index, field, value) => {
-        const newChecklist = [...formData.checklist_servico];
+        const newChecklist = [...formData.checklist];
         newChecklist[index] = { ...newChecklist[index], [field]: value };
-        setFormData({ ...formData, checklist_servico: newChecklist });
+        setFormData({ ...formData, checklist: newChecklist });
     };
 
     const addChecklistItem = () => {
         setFormData({
             ...formData,
-            checklist_servico: [
-                ...formData.checklist_servico,
+            checklist: [
+                ...formData.checklist,
                 { item: '', concluido: false, observacao: '' }
             ]
         });
@@ -53,7 +53,7 @@ export default function ServiceDetails({ service, cliente, veiculo, onUpdate }) 
                             <User className="w-4 h-4" />
                             Cliente
                         </div>
-                        <p className="font-semibold">{cliente?.nome_completo}</p>
+                        <p className="font-semibold">{cliente?.nomeCompleto}</p>
                         <p className="text-sm text-slate-500">{cliente?.telefone}</p>
                     </CardContent>
                 </Card>
@@ -76,7 +76,7 @@ export default function ServiceDetails({ service, cliente, veiculo, onUpdate }) 
                             Data de Entrada
                         </div>
                         <p className="font-semibold">
-                            {service.data_entrada ? format(new Date(service.data_entrada), "dd/MM/yyyy") : 'Não informado'}
+                            {service.dataEntrada ? format(new Date(service.dataEntrada), "dd/MM/yyyy") : 'Não informado'}
                         </p>
                     </CardContent>
                 </Card>
@@ -96,11 +96,12 @@ export default function ServiceDetails({ service, cliente, veiculo, onUpdate }) 
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="aguardando">Aguardando</SelectItem>
-                                    <SelectItem value="em_andamento">Em Andamento</SelectItem>
-                                    <SelectItem value="aguardando_pecas">Aguardando Peças</SelectItem>
-                                    <SelectItem value="aguardando_aprovacao">Aguardando Aprovação</SelectItem>
-                                    <SelectItem value="finalizado">Finalizado</SelectItem>
+                                    <SelectItem value="AGUARDANDO">Aguardando</SelectItem>
+                                    <SelectItem value="EM_ANDAMENTO">Em Andamento</SelectItem>
+                                    <SelectItem value="AGUARDANDO_PECAS">Aguardando Peças</SelectItem>
+                                    <SelectItem value="AGUARDANDO_APROVACAO">Aguardando Aprovação</SelectItem>
+                                    <SelectItem value="FINALIZADO">Finalizado</SelectItem>
+                                    <SelectItem value="CANCELADO">Cancelado</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -108,44 +109,44 @@ export default function ServiceDetails({ service, cliente, veiculo, onUpdate }) 
                         <div>
                             <Label htmlFor="data_previsao">Data de Previsão</Label>
                             <Input
-                                id="data_previsao"
+                                id="dataPrevisaoEntrega"
                                 type="date"
-                                value={formData.data_previsao}
-                                onChange={(e) => setFormData({ ...formData, data_previsao: e.target.value })}
+                                value={formData.dataPrevisaoEntrega}
+                                onChange={(e) => setFormData({ ...formData, dataPrevisaoEntrega: e.target.value })}
                             />
                         </div>
                     </div>
 
                     <div>
-                        <Label htmlFor="descricao_problema">Descrição do Problema</Label>
+                        <Label htmlFor="descricaoProblema">Descrição do Problema</Label>
                         <Textarea
-                            id="descricao_problema"
-                            value={formData.descricao_problema}
-                            onChange={(e) => setFormData({ ...formData, descricao_problema: e.target.value })}
+                            id="descricaoProblema"
+                            value={formData.descricaoProblema}
+                            onChange={(e) => setFormData({ ...formData, descricaoProblema: e.target.value })}
                             placeholder="Descreva o problema relatado pelo cliente..."
                             className="h-24"
                         />
                     </div>
 
                     <div>
-                        <Label htmlFor="diagnostico_tecnico">Diagnóstico Técnico</Label>
+                        <Label htmlFor="descricaoSolucao">Diagnóstico Técnico</Label>
                         <Textarea
-                            id="diagnostico_tecnico"
-                            value={formData.diagnostico_tecnico}
-                            onChange={(e) => setFormData({ ...formData, diagnostico_tecnico: e.target.value })}
+                            id="descricaoSolucao"
+                            value={formData.descricaoSolucao}
+                            onChange={(e) => setFormData({ ...formData, descricaoSolucao: e.target.value })}
                             placeholder="Diagnóstico técnico detalhado..."
                             className="h-24"
                         />
                     </div>
 
                     <div>
-                        <Label htmlFor="valor_mao_obra">Valor da Mão de Obra</Label>
+                        <Label htmlFor="valorTotalServicos">Valor da Mão de Obra</Label>
                         <Input
-                            id="valor_mao_obra"
+                            id="valorTotalServicos"
                             type="number"
                             step="0.01"
-                            value={formData.valor_mao_obra}
-                            onChange={(e) => setFormData({ ...formData, valor_mao_obra: parseFloat(e.target.value) || 0 })}
+                            value={formData.valorTotalServicos}
+                            onChange={(e) => setFormData({ ...formData, valorTotalServicos: parseFloat(e.target.value) || 0 })}
                             placeholder="0,00"
                         />
                     </div>
@@ -161,11 +162,11 @@ export default function ServiceDetails({ service, cliente, veiculo, onUpdate }) 
                     </Button>
                 </CardHeader>
                 <CardContent>
-                    {formData.checklist_servico.length === 0 ? (
+                    {formData.checklist.length === 0 ? (
                         <p className="text-slate-500 text-center py-4">Nenhum item no checklist</p>
                     ) : (
                         <div className="space-y-3">
-                            {formData.checklist_servico.map((item, index) => (
+                            {formData.checklist.map((item, index) => (
                                 <div key={index} className="flex items-start gap-3 p-3 border rounded-lg">
                                     <Checkbox
                                         checked={item.concluido}

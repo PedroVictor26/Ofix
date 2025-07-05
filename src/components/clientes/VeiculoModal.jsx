@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import {
     Dialog,
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Veiculo } from "../../entities/mock-data";
+import { createVeiculo } from "../../services/clientes.service";
 import { Save, Car } from "lucide-react";
 
 export default function VeiculoModal({ isOpen, onClose, clienteId, onSuccess }) {
@@ -25,6 +25,22 @@ export default function VeiculoModal({ isOpen, onClose, clienteId, onSuccess }) 
 
     const [isSaving, setIsSaving] = useState(false);
 
+    // Adicionado para depuração: loga clienteId quando o modal abre
+    useEffect(() => {
+        console.log("VeiculoModal aberto. clienteId:", clienteId);
+        // Reseta o formulário quando o modal abre
+        if (isOpen) {
+            setFormData({
+                placa: '',
+                marca: '',
+                modelo: '',
+                ano: new Date().getFullYear(),
+                cor: '',
+                observacoes: ''
+            });
+        }
+    }, [isOpen, clienteId]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -33,14 +49,14 @@ export default function VeiculoModal({ isOpen, onClose, clienteId, onSuccess }) 
             return;
         }
 
+        // Adicionado para depuração: loga os dados antes de enviar
+        console.log("Enviando dados do veículo. clienteId:", clienteId, "formData:", formData);
+
         setIsSaving(true);
         const toastId = toast.loading("Salvando veículo...");
 
         try {
-            await Veiculo.create({
-                ...formData,
-                cliente_id: clienteId
-            });
+            await createVeiculo(clienteId, formData);
 
             setFormData({
                 placa: '',
@@ -50,11 +66,12 @@ export default function VeiculoModal({ isOpen, onClose, clienteId, onSuccess }) 
                 cor: '',
                 observacoes: ''
             });
-            toast.success("Veículo salvo com sucesso!", { id: toastId });
+            toast.success("Veículo salvo com sucesso! 🎉", { id: toastId });
             onSuccess();
         } catch (error) {
             console.error("Erro ao salvar veículo:", error);
-            toast.error(`Erro ao salvar veículo: ${error.message || 'Erro desconhecido'}`, { id: toastId });
+            const errorMessage = error.response?.data?.error?.message || "Falha ao salvar o veículo.";
+            toast.error(errorMessage, { id: toastId });
         } finally {
             setIsSaving(false);
         }
@@ -62,12 +79,15 @@ export default function VeiculoModal({ isOpen, onClose, clienteId, onSuccess }) 
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-white text-black dark:bg-white dark:text-black p-6 rounded-xl shadow-xl max-w-3xl">
+            <DialogContent className="bg-white text-black dark:bg-white dark:text-black p-6 rounded-xl shadow-xl max-w-3xl" aria-describedby="veiculo-modal-description">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                         <Car className="w-6 h-6" />
                         Novo Veículo
                     </DialogTitle>
+                    <p id="veiculo-modal-description" className="sr-only">
+                        Preencha as informações do novo veículo.
+                    </p>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-6">

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx'; // Ajuste o caminho
+import { Wrench } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,7 +62,9 @@ export default function RegisterPage() {
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-100 to-green-100 p-4">
       <Card className="w-full max-w-lg shadow-2xl">
         <CardHeader className="text-center">
-          <img src="/vite.svg" alt="OFIX Logo" className="mx-auto mb-4 h-16 w-auto" /> {/* Placeholder logo */}
+                    <div className="mx-auto mb-4 h-16 w-16 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg">
+            <Wrench className="w-8 h-8 text-white" />
+          </div>
           <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">Crie sua Conta OFIX</CardTitle>
           <CardDescription className="text-slate-600">
             Comece a gerenciar sua oficina de forma eficiente.

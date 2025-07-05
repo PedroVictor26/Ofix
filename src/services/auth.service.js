@@ -1,6 +1,6 @@
 import apiClient from './api';
 
-const AUTH_TOKEN_KEY = 'ofixUserToken'; // Mesma chave usada em api.js
+const AUTH_TOKEN_KEY = 'authToken'; // Mesma chave usada em api.js
 
 export const login = async (credentials) => {
   try {

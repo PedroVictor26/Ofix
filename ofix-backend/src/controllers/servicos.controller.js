@@ -1,4 +1,5 @@
 import prisma from '../config/database.js'; // Importa a instância do Prisma Client
+import { ServiceStatus } from '@prisma/client'; // Importar o enum ServiceStatus
 
 class ServicosController {
   async createServico(req, res, next) {
@@ -59,7 +60,18 @@ class ServicosController {
           ...(responsavelId && { responsavel: { connect: { id: responsavelId } } }),
           oficina: { connect: { id: oficinaId } },
         },
-        include: { // Inclui dados relacionados na resposta
+        select: { // Usar select para incluir apenas os campos necessários
+            id: true,
+            numeroOs: true,
+            status: true,
+            descricaoProblema: true,
+            dataEntrada: true,
+            kmEntrada: true,
+            valorTotalEstimado: true,
+            clienteId: true, // Incluir clienteId diretamente
+            veiculoId: true, // Incluir veiculoId diretamente
+            responsavelId: true,
+            oficinaId: true,
             cliente: { select: { id: true, nomeCompleto: true } },
             veiculo: { select: { id: true, placa: true, modelo: true } },
             responsavel: { select: { id: true, nome: true } },
@@ -96,9 +108,9 @@ class ServicosController {
 
       const servicos = await prisma.servico.findMany({
         where: whereConditions,
-        include: {
-            cliente: { select: { id: true, nomeCompleto: true } },
-            veiculo: { select: { id: true, placa: true, modelo: true } },
+        include: { // Inclui todos os dados do veículo e cliente relacionados
+            cliente: true,
+            veiculo: true,
             responsavel: { select: { id: true, nome: true } },
         },
         orderBy: {
@@ -149,7 +161,7 @@ class ServicosController {
         return res.status(401).json({ error: 'Oficina não identificada.' });
       }
 
-      const { clienteId, veiculoId, responsavelId, ...updateData } = req.body;
+      const { clienteId, veiculoId, responsavelId, status, ...updateData } = req.body;
 
       // Verificar se o serviço existe e pertence à oficina
       const servicoExistente = await prisma.servico.findUnique({
@@ -178,6 +190,14 @@ class ServicosController {
         updateData.responsavelId = null;
       }
 
+      // Adicionar o status ao updateData se ele for válido
+      if (status) {
+        // Verifica se o status é um valor válido do enum ServiceStatus
+        if (!Object.values(ServiceStatus).includes(status)) {
+          return res.status(400).json({ error: 'Status inválido.' });
+        }
+        updateData.status = status;
+      }
 
       // Converte datas se vierem como string
       if (updateData.dataEntrada) updateData.dataEntrada = new Date(updateData.dataEntrada);

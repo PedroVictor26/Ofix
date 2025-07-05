@@ -38,7 +38,7 @@ export function ClienteCard({ cliente, veiculos, servicos, onCardClick, onEditCl
                         </div>
                         <div className="flex-1">
                             <h3 className="text-xl font-bold text-slate-800 group-hover:text-blue-600 transition-colors duration-300">
-                                {cliente.nome}
+                                {cliente.nomeCompleto}
                             </h3>
                             <div className="flex flex-wrap items-center gap-x-6 gap-y-1 mt-2 text-sm text-slate-500">
                                 {cliente.telefone && (

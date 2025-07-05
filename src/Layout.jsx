@@ -6,7 +6,7 @@ import {
     Package,
     DollarSign,
     Settings,
-    Wrench,
+    Wrench, // Ícone da chave de boca que vamos usar
     Bell,
     Search,
     LogOut
@@ -67,7 +67,6 @@ export default function Layout() {
     const location = useLocation();
     const { user, logout, isAuthenticated, isLoadingAuth } = useAuth(); // Use o hook useAuth
     const [searchTerm, setSearchTerm] = useState("");
-    // const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Parece não estar sendo usado
 
     // Função para filtrar itens de navegação baseado na busca
     const filteredNavigationItems = navigationItems.filter(item =>
@@ -104,8 +103,6 @@ export default function Layout() {
             />
             <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-blue-50">
                 
-                
-
                 {/* Sidebar fixa */}
                 <Sidebar className="border-r border-slate-200/60 bg-white/95 backdrop-blur-md shadow-xl z-20 fixed h-full w-64">
                     {/* Header da Sidebar */}
@@ -113,6 +110,7 @@ export default function Layout() {
                         <div className="flex items-center gap-3">
                             <div className="relative group">
                                 <div className="w-12 h-12 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-transform duration-200">
+                                    {/* LOGO REMOVIDO E SUBSTITUÍDO POR ÍCONE */}
                                     <Wrench className="w-7 h-7 text-white" />
                                 </div>
                                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-orange-400 to-orange-500 rounded-full flex items-center justify-center shadow-sm status-badge">
@@ -259,7 +257,6 @@ export default function Layout() {
                                     <LogOut className="w-5 h-5" />
                                 </Button>
                             )}
-                            {/* O botão de sino pode ser mantido ou removido se não houver funcionalidade de notificação */}
                             <Button 
                                 variant="ghost" 
                                 size="icon"
@@ -274,30 +271,17 @@ export default function Layout() {
 
                 {/* Conteúdo Principal */}
                 <main className="flex-1 flex flex-col overflow-hidden ml-64">
-                    {/* Header fixo */}
-                    <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/60 px-6 py-4 sticky top-0 z-10 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <div className="hidden md:flex items-center gap-2">
-                                    <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-                                        <Wrench className="w-4 h-4 text-white" />
-                                    </div>
-                                    <h1 className="text-xl font-bold text-slate-900">OFIX - Sistema Operacional</h1>
-                                </div>
-                            </div>
-                            <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-600">
-                                <Bell className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    </header>
+                    {/* Header Desktop (não existe mais) - REMOVIDO para consistência */}
 
-                    {/* Header Mobile */}
-                    <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/60 px-6 py-4 md:hidden shadow-sm sticky top-0 z-10">
+                    {/* Header Mobile / Unificado */}
+                    <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/60 px-6 py-4 shadow-sm sticky top-0 z-10">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <SidebarTrigger className="hover:bg-slate-100 p-2 rounded-lg transition-colors duration-200" />
+                                {/* O trigger da sidebar só aparece em telas menores */}
+                                <SidebarTrigger className="md:hidden hover:bg-slate-100 p-2 rounded-lg transition-colors duration-200" />
                                 <div className="flex items-center gap-2">
                                     <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
+                                        {/* LOGO REMOVIDO E SUBSTITUÍDO POR ÍCONE */}
                                         <Wrench className="w-4 h-4 text-white" />
                                     </div>
                                     <h1 className="text-xl font-bold text-slate-900">OFIX</h1>
@@ -308,7 +292,7 @@ export default function Layout() {
                             </Button>
                         </div>
                     </header>
-
+                    
                     {/* Área de Conteúdo */}
                     <div className="flex-1 overflow-y-auto p-6 md:p-8">
                         <Outlet />

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ProcedimentoPadrao, MensagemPadrao } from '../entities/mock-data'; // Ajuste o caminho
+import { getAllProcedimentos } from '../services/procedimentos.service';
+import { getAllMensagens } from '../services/mensagens.service';
 
 export function useConfiguracoesData() {
     const [procedimentos, setProcedimentos] = useState([]);
@@ -12,8 +13,8 @@ export function useConfiguracoesData() {
         setError(null);
         try {
             const [procedimentosData, mensagensData] = await Promise.all([
-                ProcedimentoPadrao.list(),
-                MensagemPadrao.list(),
+                getAllProcedimentos(),
+                getAllMensagens(),
             ]);
             setProcedimentos(procedimentosData || []);
             setMensagens(mensagensData || []);

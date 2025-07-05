@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Edit, Package } from "lucide-react";
 
 const PecaRow = ({ peca, fornecedores, onEdit }) => {
-    const fornecedor = fornecedores.find(f => f.id === peca.fornecedor_id);
+    const fornecedor = fornecedores.find(f => f.id === peca.fornecedorId);
     const isEstoqueBaixo = peca.quantidade <= peca.estoque_minimo;
 
     return (
@@ -29,7 +29,7 @@ const PecaRow = ({ peca, fornecedores, onEdit }) => {
                 {fornecedor?.nome || "Não informado"}
             </TableCell>
             <TableCell className="font-medium text-slate-800">
-                R$ {peca.preco_venda.toFixed(2)}
+                R$ {Number(peca.precoVenda || 0).toFixed(2)}
             </TableCell>
             <TableCell className="text-right">
                 <Button variant="ghost" size="icon" onClick={() => onEdit(peca)}>

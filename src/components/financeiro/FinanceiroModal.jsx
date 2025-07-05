@@ -21,18 +21,33 @@ const FormError = ({ message }) => (
 );
 
 export default function FinanceiroModal({ isOpen, onClose, transacao, onSuccess }) {
-    const [formData, setFormData] = useState({});
+    const [formData, setFormData] = useState({
+        descricao: '',
+        valor: '',
+        tipo: 'Entrada',
+        data: new Date().toISOString().split('T')[0],
+        categoria: '',
+    });
     const [errors, setErrors] = useState({});
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && transacao) { // Only update if modal is open and a transaction is provided (for editing)
             setFormData({
                 descricao: transacao?.descricao || '',
                 valor: transacao?.valor || '',
                 tipo: transacao?.tipo || 'Entrada',
                 data: transacao?.data ? new Date(transacao.data).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
                 categoria: transacao?.categoria || '',
+            });
+            setErrors({});
+        } else if (isOpen && !transacao) { // Reset for new transaction
+            setFormData({
+                descricao: '',
+                valor: '',
+                tipo: 'Entrada',
+                data: new Date().toISOString().split('T')[0],
+                categoria: '',
             });
             setErrors({});
         }

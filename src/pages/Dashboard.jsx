@@ -10,6 +10,7 @@ import StatsCards, { StatsCardSkeleton } from "@/components/dashboard/StatsCards
 import KanbanBoard from "@/components/dashboard/KanbanBoard";
 import ServiceModal from "@/components/dashboard/ServiceModal";
 import NewServiceModal from "@/components/dashboard/NewServiceModal";
+import * as servicosService from '../services/servicos.service.js';
 
 // Componente de Erro Refinado
 const ErrorState = ({ error, onRetry }) => (
@@ -38,26 +39,52 @@ export default function Dashboard() {
     }, [servicos]);
 
     const sensors = useSensors(
-        useSensor(PointerSensor),
+        useSensor(PointerSensor, {
+            // Exige que o mouse se mova 8px antes de ativar o arrasto, evitando conflitos com o clique.
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
 
     const handleDragEnd = async (event) => {
         const { active, over } = event;
-        if (!over) return;
+        console.log("Drag End Event - active:", active); // Log para depuração
+        console.log("Drag End Event - over:", over); // Log para depuração
+
+        if (!over || over.data.current?.type !== 'column') {
+            console.error("Solto fora de uma coluna válida ou tipo de destino incorreto:", over);
+            return;
+        }
 
         const activeId = active.id.toString();
-        const newStatus = over.id.toString();
+        const newStatus = over.id.toString(); // over.id deve ser o ID da coluna (status key)
         const servicoArrastado = localServicos.find(s => s.id.toString() === activeId);
 
-        if (servicoArrastado && servicoArrastado.status !== newStatus) {
+        // MAPA DE TRADUÇÃO: Converte o ID da coluna (frontend) para o valor do enum (backend)
+        const statusMap = {
+            'AGUARDANDO': 'AGUARDANDO',
+            'EM_ANDAMENTO': 'EM_ANDAMENTO',
+            'AGUARDANDO_PECAS': 'AGUARDANDO_PECAS',
+            'AGUARDANDO_APROVACAO': 'AGUARDANDO_APROVACAO',
+            'FINALIZADO': 'FINALIZADO',
+            'CANCELADO': 'CANCELADO',
+        };
+
+        const newStatusEnum = statusMap[newStatus];
+
+        if (!newStatusEnum) {
+            console.error("Status de coluna inválido para tradução:", newStatus);
+            return;
+        }
+
+        if (servicoArrastado && servicoArrastado.status !== newStatusEnum) {
             const originalServicos = [...localServicos];
-            setLocalServicos(prev => prev.map(s => s.id.toString() === activeId ? { ...s, status: newStatus } : s));
+            setLocalServicos(prev => prev.map(s => s.id.toString() === activeId ? { ...s, status: newStatusEnum } : s));
 
             try {
-                // Simulação de chamada à API
-                await new Promise(resolve => setTimeout(resolve, 500));
-                // await servicosService.updateServico(activeId, { status: newStatus });
+                await servicosService.updateServico(activeId, { status: newStatusEnum });
             } catch (err) {
                 console.error("Falha ao atualizar status:", err);
                 setLocalServicos(originalServicos);
@@ -127,18 +154,18 @@ export default function Dashboard() {
             </div>
 
             {/* Modals */}
+            <NewServiceModal
+                isOpen={isNewServiceModalOpen}
+                onClose={() => setNewServiceModalOpen(false)}
+                onSuccess={reload}
+                clientes={clientes}
+                veiculos={veiculos}
+            />
             <ServiceModal
                 isOpen={isServiceModalOpen}
                 onClose={() => setServiceModalOpen(false)}
                 service={selectedService}
                 onUpdate={reload}
-                clientes={clientes}
-                veiculos={veiculos}
-            />
-            <NewServiceModal
-                isOpen={isNewServiceModalOpen}
-                onClose={() => setNewServiceModalOpen(false)}
-                onSuccess={reload}
                 clientes={clientes}
                 veiculos={veiculos}
             />

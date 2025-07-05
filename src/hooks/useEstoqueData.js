@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Peca, Fornecedor } from '../entities/mock-data';
+import { getAllPecas } from '../services/pecas.service';
+import { getAllFornecedores } from '../services/fornecedores.service';
 
 export function useEstoqueData() {
     const [pecas, setPecas] = useState([]);
@@ -12,8 +13,8 @@ export function useEstoqueData() {
         setError(null);
         try {
             const [pecasData, fornecedoresData] = await Promise.all([
-                Peca.list(),
-                Fornecedor.list(),
+                getAllPecas(),
+                getAllFornecedores(),
             ]);
             setPecas(pecasData || []);
             setFornecedores(fornecedoresData || []);
@@ -31,7 +32,11 @@ export function useEstoqueData() {
 
     const stats = useMemo(() => {
         const totalPecas = pecas.length;
-        const valorTotalEstoque = pecas.reduce((total, peca) => total + (peca.quantidade * peca.preco_custo), 0);
+        const valorTotalEstoque = pecas.reduce((total, peca) => {
+            const quantidade = Number(peca.estoqueAtual || 0);
+            const precoCusto = Number(peca.precoCusto || 0);
+            return total + (quantidade * precoCusto);
+        }, 0);
         const pecasEstoqueBaixo = pecas.filter(p => p.quantidade <= p.estoque_minimo).length;
         const totalFornecedores = fornecedores.length;
 

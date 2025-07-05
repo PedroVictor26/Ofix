@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Cliente, Veiculo, Servico } from '../entities/mock-data';
+import { getAllClientes } from '../services/clientes.service';
+import { getAllServicos } from '../services/servicos.service';
 
 export function useClientesData() {
     const [clientes, setClientes] = useState([]);
-    const [veiculos, setVeiculos] = useState([]);
     const [servicos, setServicos] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -13,14 +13,12 @@ export function useClientesData() {
         setError(null);
         try {
             // Usando Promise.all para carregar dados em paralelo para melhor performance
-            const [clientesData, veiculosData, servicosData] = await Promise.all([
-                Cliente.list(),
-                Veiculo.list(),
-                Servico.list()
+            const [clientesData, servicosData] = await Promise.all([
+                getAllClientes(),
+                getAllServicos()
             ]);
 
             setClientes(clientesData);
-            setVeiculos(veiculosData);
             setServicos(servicosData);
         } catch (err) {
             console.error("Erro ao carregar dados:", err);
@@ -35,11 +33,12 @@ export function useClientesData() {
     }, [loadData]); // O hook executa a busca de dados na montagem do componente
 
     const getVeiculosByCliente = (clienteId) => {
-        return veiculos.filter(v => v.cliente_id === clienteId);
+        const cliente = clientes.find(c => c.id === clienteId);
+        return cliente ? cliente.veiculos : [];
     };
 
     const getServicosByCliente = (clienteId) => {
-        return servicos.filter(s => s.cliente_id === clienteId);
+        return servicos.filter(s => s.clienteId === clienteId);
     };
 
     return {

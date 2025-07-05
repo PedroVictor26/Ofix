@@ -56,8 +56,6 @@ export default function NewServiceModal({ isOpen, onClose, onSuccess: reloadDash
             const dataToSend = {
                 ...formData,
                 // Converte campos que devem ser numéricos antes de enviar
-                clienteId: parseInt(formData.clienteId, 10),
-                veiculoId: parseInt(formData.veiculoId, 10),
                 kmEntrada: formData.kmEntrada ? parseInt(formData.kmEntrada, 10) : null,
                 valorTotalEstimado: formData.valorTotalEstimado ? parseFloat(formData.valorTotalEstimado) : null,
             };
@@ -80,7 +78,7 @@ export default function NewServiceModal({ isOpen, onClose, onSuccess: reloadDash
     // A lógica para filtrar as opções continua ótima.
     const clienteOptions = Object.values(clientes || {});
     const veiculoOptions = formData.clienteId
-        ? Object.values(veiculos || {}).filter(v => v.clienteId === parseInt(formData.clienteId, 10))
+        ? (veiculos || []).filter(v => v.clienteId === formData.clienteId)
         : [];
 
     return (

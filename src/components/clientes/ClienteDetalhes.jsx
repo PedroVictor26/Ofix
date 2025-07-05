@@ -126,7 +126,7 @@ export default function ClienteDetalhes({
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
-            <SheetContent className="w-full sm:max-w-lg bg-white p-0 flex flex-col">
+            <SheetContent className="w-full sm:max-w-lg bg-white p-0 flex flex-col" aria-describedby="cliente-detalhes-description">
                 <SheetHeader className="p-6">
                     <SheetTitle className="text-2xl font-bold text-slate-900 flex items-center gap-3">
                         <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -134,9 +134,9 @@ export default function ClienteDetalhes({
                         </div>
                         {cliente.nome}
                     </SheetTitle>
-                    <SheetDescription>
+                    <p id="cliente-detalhes-description" className="sr-only">
                         Detalhes do cliente, veículos e histórico de serviços.
-                    </SheetDescription>
+                    </p>
                 </SheetHeader>
 
                 <div className="px-6 pb-6 space-y-6 overflow-y-auto flex-1">

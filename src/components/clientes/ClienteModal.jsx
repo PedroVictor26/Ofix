@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, Loader2, AlertCircle } from "lucide-react";
+import { createCliente, updateCliente } from '@/services/clientes.service'; // Importação corrigida
+import { toast } from 'react-hot-toast';
 
 // Um componente de erro reutilizável para os campos do formulário
 const FormError = ({ message }) => (
@@ -69,17 +71,32 @@ export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
         }
 
         setIsSaving(true);
+        
         try {
-            // Simulação de chamada de API
-            // Substitua pela sua lógica real de API (Cliente.create, Cliente.update)
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // --- INÍCIO DA LÓGICA REAL ---
+
+            // --- INÍCIO DA LÓGICA REAL ---
+
+                if (cliente) {
+                    // Se o objeto 'cliente' existe, estamos editando
+                    await updateCliente(cliente.id, { ...formData, nomeCompleto: formData.nome });
+                    toast.success("Cliente atualizado com sucesso!");
+                } else {
+                    // Se não, estamos criando um novo
+                    await createCliente({ ...formData, nomeCompleto: formData.nome });
+                    toast.success("Cliente criado com sucesso!");
+                }
+
+            // --- FIM DA LÓGICA REAL ---
             
-            console.log("Salvando dados:", formData);
-            onSuccess(); // Chama a função de sucesso passada como prop
-            onClose(); // Fecha o modal
+            onSuccess(); // Chama a função para avisar o componente pai que algo mudou
+            onClose();   // Fecha o modal
+
         } catch (error) {
             console.error("Erro ao salvar cliente:", error);
-            // Aqui você pode adicionar um toast de erro, se desejar
+            // Pega a mensagem de erro da API, se houver, ou uma padrão
+            const errorMessage = error.response?.data?.error?.message || "Falha ao salvar o cliente.";
+            toast.error(errorMessage);
         } finally {
             setIsSaving(false);
         }
@@ -87,14 +104,14 @@ export default function ClienteModal({ isOpen, onClose, cliente, onSuccess }) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-white sm:max-w-lg">
+            <DialogContent className="bg-white sm:max-w-lg" aria-describedby="cliente-modal-description">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-slate-800">
                         {cliente ? 'Editar Cliente' : 'Novo Cliente'}
                     </DialogTitle>
-                    <DialogDescription>
+                    <p id="cliente-modal-description" className="sr-only">
                         Preencha as informações abaixo para {cliente ? 'atualizar o' : 'criar um novo'} cliente.
-                    </DialogDescription>
+                    </p>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="grid gap-6 py-4">

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Financeiro, Servico } from '../entities/mock-data'; // Ajuste o caminho conforme necessário
+import { getAllServicos } from '../services/servicos.service';
+import { getAllTransacoes } from '../services/financeiro.service';
 
 export function useFinanceiroData() {
     const [transacoes, setTransacoes] = useState([]);
@@ -12,12 +13,12 @@ export function useFinanceiroData() {
         setIsLoading(true);
         setError(null);
         try {
-            const [transacoesData, servicosData] = await Promise.all([
-                Financeiro.list(),
-                Servico.list(),
+            const [servicosData, transacoesData] = await Promise.all([
+                getAllServicos(),
+                getAllTransacoes(),
             ]);
-            setTransacoes(transacoesData || []);
             setServicos(servicosData || []);
+            setTransacoes(transacoesData || []);
         } catch (err) {
             console.error("Erro ao carregar dados financeiros:", err);
             setError(err.message || "Falha ao carregar dados.");

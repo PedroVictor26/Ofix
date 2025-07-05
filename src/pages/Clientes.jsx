@@ -79,6 +79,7 @@ export default function Clientes() {
     };
     
     const handleAddVeiculo = () => {
+        console.log("handleAddVeiculo called. selectedCliente:", selectedCliente); // Log para depuração
         setVeiculoModalOpen(true);
     }
 
