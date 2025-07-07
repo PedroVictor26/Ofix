@@ -6,7 +6,11 @@ generator client {
 }
 
 datasource db {
+<<<<<<< Updated upstream
   provider = "sqlite" // Já está correto
+=======
+  provider = "sqlite" // CORRIGIDO PARA USAR SQLITE
+>>>>>>> Stashed changes
   url      = env("DATABASE_URL")
 }
 
@@ -16,8 +20,12 @@ model User {
   nome      String
   email     String   @unique
   password  String
+<<<<<<< Updated upstream
   // CORREÇÃO: 'enum' não é suportado, trocado para String
   role      String   @default("USER")
+=======
+  role      String   @default("ADMIN") // CORRIGIDO DE UserRole PARA String
+>>>>>>> Stashed changes
   oficinaId String?
   oficina   Oficina? @relation(fields: [oficinaId], references: [id])
   servicos  Servico[]
@@ -26,6 +34,7 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
+<<<<<<< Updated upstream
 // CORREÇÃO: Bloco 'enum' removido pois não é suportado pelo SQLite
 
 model Oficina {
@@ -50,6 +59,41 @@ model Oficina {
 
 // Clientes e Veículos
 // ARQUIVO: ofix-backend/prisma/schema.prisma
+=======
+model Oficina {
+  id                    String                @id @default(uuid())
+  nome                  String
+  cnpj                  String?               @unique
+  telefone              String?
+  endereco              String?
+
+  users                 User[]
+  clientes              Cliente[]
+  veiculos              Veiculo[]
+  servicos              Servico[]
+  pecas                 Peca[]
+  fornecedores          Fornecedor[]
+  procedimentosPadrao   ProcedimentoPadrao[]
+  mensagensPadrao       MensagemPadrao[]
+  transacoesFinanceiras Financeiro[]
+
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+}
+
+// Clientes e Veículos
+model Cliente {
+  id            String    @id @default(uuid())
+  nomeCompleto  String
+  cpfCnpj       String?   @unique
+  telefone      String?
+  email         String?   @unique
+  endereco      String?
+  observacoes   String?   // CAMPO ADICIONADO QUE ESTAVA FALTANDO
+
+  oficinaId     String
+  oficina       Oficina   @relation(fields: [oficinaId], references: [id])
+>>>>>>> Stashed changes
 
 // ARQUIVO: ofix-backend/prisma/schema.prisma
 
@@ -96,10 +140,16 @@ model Veiculo {
 
 // Serviços
 model Servico {
+<<<<<<< Updated upstream
   id                  String   @id @default(uuid())
   numeroOs            String   @unique
   // CORREÇÃO: 'enum' não é suportado, trocado para String
   status              String   @default("AGUARDANDO")
+=======
+  id                  String        @id @default(uuid())
+  numeroOs            String        @unique
+  status              String        @default("AGUARDANDO") // CORRIGIDO DE ServiceStatus PARA String
+>>>>>>> Stashed changes
   descricaoProblema   String?
   descricaoSolucao    String?
   dataEntrada         DateTime @default(now())
@@ -112,8 +162,12 @@ model Servico {
   valorTotalPecas     Float?
   valorTotalFinal     Float?
   kmEntrada           Int?
+<<<<<<< Updated upstream
   // CORREÇÃO: 'Json' não é suportado, trocado para String
   checklist           String?
+=======
+  checklist           String?       // CORRIGIDO DE Json? PARA String?
+>>>>>>> Stashed changes
   observacoes         String?
 
   clienteId           String
@@ -203,17 +257,21 @@ model ItemServicoPeca {
   @@unique([servicoId, pecaId])
 }
 
-
 // Procedimentos Padrão
 model ProcedimentoPadrao {
   id                   String   @id @default(uuid())
   codigo               String?  @unique
   nome                 String
   descricao            String?
+<<<<<<< Updated upstream
   // CORREÇÃO: 'Decimal' não é suportado, trocado para Float
   tempoEstimadoHoras   Float?
   // CORREÇÃO: 'Json' não é suportado, trocado para String
   checklistJson        String?
+=======
+  tempoEstimadoHoras   Decimal?
+  checklistJson        String?  // CORRIGIDO DE Json? PARA String?
+>>>>>>> Stashed changes
 
   oficinaId            String
   oficina              Oficina  @relation(fields: [oficinaId], references: [id])
@@ -249,6 +307,7 @@ model MensagemPadrao {
   codigo      String?  @unique
   nome        String
   template    String
+  categoria   String?
   
   oficinaId   String
   oficina     Oficina  @relation(fields: [oficinaId], references: [id])

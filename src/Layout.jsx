@@ -6,15 +6,19 @@ import {
     Package,
     DollarSign,
     Settings,
+<<<<<<< Updated upstream
     Menu,
     X,
+=======
+>>>>>>> Stashed changes
     Wrench,
     Bell,
     Search,
     LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "./context/AuthContext.jsx"; // Import useAuth
+import { useAuth } from "./context/AuthContext.jsx";
+import { useFinanceiroContext } from "./context/FinanceiroContext.jsx";
 import { Input } from "@/components/ui/input";
 import {
     Sidebar,
@@ -30,7 +34,7 @@ import {
     SidebarProvider,
     SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Toaster } from 'react-hot-toast';
+
 
 const navigationItems = [
     {
@@ -68,6 +72,7 @@ const navigationItems = [
 export default function Layout() {
     const location = useLocation();
     const { user, logout, isAuthenticated, isLoadingAuth } = useAuth(); // Use o hook useAuth
+    const { faturamentoHoje } = useFinanceiroContext();
     const [searchTerm, setSearchTerm] = useState("");
     // const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Parece não estar sendo usado
 
@@ -79,31 +84,7 @@ export default function Layout() {
 
     return (
         <SidebarProvider>
-            <Toaster
-                position="top-right"
-                reverseOrder={false}
-                toastOptions={{
-                    duration: 3000,
-                    style: {
-                        background: '#333',
-                        color: '#fff',
-                    },
-                    success: {
-                        duration: 3000,
-                        theme: {
-                            primary: 'green',
-                            secondary: 'black',
-                        },
-                    },
-                    error: {
-                        duration: 4000,
-                         theme: {
-                            primary: 'red',
-                            secondary: 'black',
-                        },
-                    }
-                }}
-            />
+            
             <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-blue-50">
                 {/* Estilos CSS customizados */}
                 <style>
@@ -262,7 +243,7 @@ export default function Layout() {
                                             <div className="text-xs text-slate-500">Receita atual</div>
                                         </div>
                                         <div className="flex flex-col items-end">
-                                            <span className="font-bold text-green-600 text-sm">R$ 0,00</span>
+                                            <span className="font-bold text-green-600 text-sm">{faturamentoHoje.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                                         </div>
                                     </div>
                                 </div>
