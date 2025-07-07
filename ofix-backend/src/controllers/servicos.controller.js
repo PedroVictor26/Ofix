@@ -1,4 +1,9 @@
 import prisma from '../config/database.js'; // Importa a instância do Prisma Client
+<<<<<<< Updated upstream
+=======
+
+// A linha "import { ServiceStatus } from '@prisma/client';" foi removida daqui.
+>>>>>>> Stashed changes
 
 class ServicosController {
   async createServico(req, res, next) {
@@ -21,12 +26,11 @@ class ServicosController {
         return res.status(400).json({ error: 'Campos obrigatórios (numeroOs, clienteId, veiculoId) faltando.' });
       }
 
-      // Validação adicional (exemplos)
       const clienteExists = await prisma.cliente.findUnique({ where: { id: clienteId, oficinaId } });
       if (!clienteExists) {
         return res.status(404).json({ error: 'Cliente não encontrado nesta oficina.' });
       }
-      const veiculoExists = await prisma.veiculo.findUnique({ where: { id: veiculoId, clienteId } }); // Garante que o veículo pertence ao cliente
+      const veiculoExists = await prisma.veiculo.findUnique({ where: { id: veiculoId, clienteId } });
       if (!veiculoExists) {
         return res.status(404).json({ error: 'Veículo não encontrado ou não pertence ao cliente informado.' });
       }
@@ -37,11 +41,10 @@ class ServicosController {
         }
       }
 
-
       const novoServico = await prisma.servico.create({
         data: {
           numeroOs,
-          status, // Garanta que o status enviado seja um valor válido do Enum StatusServico
+          status,
           descricaoProblema,
           descricaoSolucao,
           dataEntrada: dataEntrada ? new Date(dataEntrada) : new Date(),
@@ -53,14 +56,29 @@ class ServicosController {
           valorTotalPecas,
           valorTotalFinal,
           kmEntrada,
-          checklist, // Prisma espera um JsonNull ou um objeto JSON válido
+          checklist,
           observacoes,
           cliente: { connect: { id: clienteId } },
           veiculo: { connect: { id: veiculoId } },
           ...(responsavelId && { responsavel: { connect: { id: responsavelId } } }),
           oficina: { connect: { id: oficinaId } },
         },
+<<<<<<< Updated upstream
         include: { // Inclui dados relacionados na resposta
+=======
+        select: {
+            id: true,
+            numeroOs: true,
+            status: true,
+            descricaoProblema: true,
+            dataEntrada: true,
+            kmEntrada: true,
+            valorTotalEstimado: true,
+            clienteId: true,
+            veiculoId: true,
+            responsavelId: true,
+            oficinaId: true,
+>>>>>>> Stashed changes
             cliente: { select: { id: true, nomeCompleto: true } },
             veiculo: { select: { id: true, placa: true, modelo: true } },
             responsavel: { select: { id: true, nome: true } },
@@ -71,7 +89,7 @@ class ServicosController {
       if (error.code === 'P2002' && error.meta?.target?.includes('numeroOs')) {
         return res.status(409).json({ error: 'Número da Ordem de Serviço já existe.' });
       }
-      if (error.code === 'P2025') { // Foreign key constraint failed
+      if (error.code === 'P2025') {
         return res.status(400).json({ error: 'Erro ao conectar entidades relacionadas (ex: cliente, veículo, responsável ou oficina não encontrados).' });
       }
       next(error);
@@ -86,7 +104,6 @@ class ServicosController {
         return res.status(401).json({ error: 'Oficina não identificada.' });
       }
 
-      // TODO: Adicionar filtros (por status, cliente, data, etc.) e paginação
       const { status, clienteId, veiculoId, dataDe, dataAte } = req.query;
       const whereConditions = { oficinaId };
 
@@ -99,12 +116,17 @@ class ServicosController {
       const servicos = await prisma.servico.findMany({
         where: whereConditions,
         include: {
+<<<<<<< Updated upstream
             cliente: { select: { id: true, nomeCompleto: true } },
             veiculo: { select: { id: true, placa: true, modelo: true } },
+=======
+            cliente: true,
+            veiculo: true,
+>>>>>>> Stashed changes
             responsavel: { select: { id: true, nome: true } },
         },
         orderBy: {
-            dataEntrada: 'desc' // Exemplo de ordenação
+            dataEntrada: 'desc'
         }
       });
       res.json(servicos);
@@ -116,19 +138,23 @@ class ServicosController {
   async getServicoById(req, res, next) {
     try {
       const { id } = req.params;
+<<<<<<< Updated upstream
       // const oficinaId = req.user?.oficinaId; // Descomentar
       const oficinaId = "mock-oficina-id"; // Placeholder
+=======
+      const oficinaId = req.user?.oficinaId;
+>>>>>>> Stashed changes
       if (!oficinaId) {
         return res.status(401).json({ error: 'Oficina não identificada.' });
       }
 
       const servico = await prisma.servico.findUnique({
-        where: { id, oficinaId }, // Garante que só busca na oficina do usuário
+        where: { id, oficinaId },
         include: {
-          cliente: true, // Exemplo: buscar todos os dados do cliente
+          cliente: true,
           veiculo: true,
           responsavel: { select: { id: true, nome: true, email: true } },
-          itensPeca: { include: { peca: true } }, // Exemplo de nested include
+          itensPeca: { include: { peca: true } },
           procedimentos: { include: { procedimentoPadrao: true } },
         },
       });
@@ -145,15 +171,18 @@ class ServicosController {
   async updateServico(req, res, next) {
     try {
       const { id } = req.params;
+<<<<<<< Updated upstream
       // const oficinaId = req.user?.oficinaId; // Descomentar
       const oficinaId = "mock-oficina-id"; // Placeholder
+=======
+      const oficinaId = req.user?.oficinaId;
+>>>>>>> Stashed changes
       if (!oficinaId) {
         return res.status(401).json({ error: 'Oficina não identificada.' });
       }
 
       const { clienteId, veiculoId, responsavelId, ...updateData } = req.body;
 
-      // Verificar se o serviço existe e pertence à oficina
       const servicoExistente = await prisma.servico.findUnique({
         where: { id, oficinaId },
       });
@@ -161,7 +190,6 @@ class ServicosController {
         return res.status(404).json({ error: 'Serviço não encontrado para atualização.' });
       }
 
-      // Validações opcionais para IDs, se forem alterados
       if (clienteId && clienteId !== servicoExistente.clienteId) {
         const clienteExists = await prisma.cliente.findUnique({ where: { id: clienteId, oficinaId } });
         if (!clienteExists) return res.status(404).json({ error: 'Novo cliente não encontrado.' });
@@ -172,24 +200,37 @@ class ServicosController {
         if (!veiculoExists) return res.status(404).json({ error: 'Novo veículo não encontrado ou não pertence ao cliente.' });
         updateData.veiculoId = veiculoId;
       }
-       if (responsavelId && responsavelId !== servicoExistente.responsavelId) {
+      if (responsavelId && responsavelId !== servicoExistente.responsavelId) {
         const responsavelExists = await prisma.user.findUnique({ where: { id: responsavelId, oficinaId }});
         if (!responsavelExists) return res.status(404).json({ error: 'Novo responsável não encontrado.' });
         updateData.responsavelId = responsavelId;
-      } else if (responsavelId === null) { // Permitir desassociar responsável
+      } else if (responsavelId === null) {
         updateData.responsavelId = null;
       }
 
+<<<<<<< Updated upstream
+=======
+      // <<-- AQUI ESTÁ A CORREÇÃO -->>
+      if (status) {
+        const statusValidos = [
+          'AGUARDANDO', 'EM_ANDAMENTO', 'AGUARDANDO_PECAS', 
+          'AGUARDANDO_APROVACAO', 'FINALIZADO', 'CANCELADO'
+        ];
+        if (!statusValidos.includes(status)) {
+          return res.status(400).json({ error: `Status inválido. Use um dos seguintes: ${statusValidos.join(', ')}` });
+        }
+        updateData.status = status;
+      }
+      // <<-- FIM DA CORREÇÃO -->>
+>>>>>>> Stashed changes
 
-      // Converte datas se vierem como string
       if (updateData.dataEntrada) updateData.dataEntrada = new Date(updateData.dataEntrada);
       if (updateData.dataPrevisaoEntrega) updateData.dataPrevisaoEntrega = new Date(updateData.dataPrevisaoEntrega);
       if (updateData.dataConclusao) updateData.dataConclusao = new Date(updateData.dataConclusao);
       if (updateData.dataEntregaCliente) updateData.dataEntregaCliente = new Date(updateData.dataEntregaCliente);
 
-
       const servicoAtualizado = await prisma.servico.update({
-        where: { id, oficinaId }, // Dupla checagem de segurança
+        where: { id, oficinaId },
         data: updateData,
         include: {
             cliente: { select: { id: true, nomeCompleto: true } },
@@ -212,35 +253,32 @@ class ServicosController {
   async deleteServico(req, res, next) {
     try {
       const { id } = req.params;
+<<<<<<< Updated upstream
       // const oficinaId = req.user?.oficinaId; // Descomentar
       const oficinaId = "mock-oficina-id"; // Placeholder
+=======
+      const oficinaId = req.user?.oficinaId;
+>>>>>>> Stashed changes
       if (!oficinaId) {
         return res.status(401).json({ error: 'Oficina não identificada.' });
       }
 
-      // Antes de deletar, verificar se o serviço existe e pertence à oficina
       const servicoExistente = await prisma.servico.findUnique({
         where: { id, oficinaId },
       });
       if (!servicoExistente) {
         return res.status(404).json({ error: 'Serviço não encontrado para exclusão.' });
       }
-
-      // Considerar o que fazer com relações (ex: ItemServicoPeca). O Prisma pode lidar com isso via `onDelete` no schema,
-      // ou pode ser necessário deletar manualmente entidades relacionadas dependentes se não houver cascade.
-      // Por simplicidade, aqui apenas deletamos o serviço.
-
+      
       await prisma.servico.delete({
         where: { id, oficinaId },
       });
-      res.status(204).send(); // Sucesso sem conteúdo
+      res.status(204).send();
     } catch (error)
     {
-      if (error.code === 'P2025') { // Tentativa de deletar um registro que não existe
+      if (error.code === 'P2025') {
         return res.status(404).json({ error: 'Serviço não encontrado para exclusão.' });
       }
-      // Tratar erro P2003 (foreign key constraint) se houver dados relacionados que impedem a exclusão
-      // e não estiverem configurados para cascade delete.
       if (error.code === 'P2003') {
          return res.status(409).json({ error: 'Não é possível excluir o serviço pois existem dados relacionados (ex: itens de serviço, procedimentos). Remova-os primeiro ou contate o suporte.' });
       }

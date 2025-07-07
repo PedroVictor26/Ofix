@@ -59,6 +59,7 @@ export default function ProcedimentosList({ procedimentos, onEdit, isLoading }) 
             {procedimentos.map((procedimento, index) => (
                 <motion.div
                     key={procedimento.id}
+<<<<<<< Updated upstream
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -100,14 +101,56 @@ export default function ProcedimentosList({ procedimentos, onEdit, isLoading }) 
                                                 </div>
                                             )}
                                         </div>
+=======
+                    className="bg-white border border-slate-200 shadow-sm rounded-xl cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 group"
+                    onClick={() => onEdit(procedimento)}
+                >
+                    <CardContent className="p-6">
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-center gap-4 flex-1">
+                                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+                                    <Wrench className="w-6 h-6 text-blue-600" />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="text-lg font-bold text-slate-800 group-hover:text-blue-600 transition-colors duration-300 flex items-center gap-2">
+                                        {procedimento.nome}
+                                        {procedimento.checklist?.length > 0 && (
+                                            <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 text-xs font-medium px-2 py-0.5 rounded-full">
+                                                {procedimento.checklist.length} itens
+                                            </Badge>
+                                        )}
+                                    </h3>
+                                    <p className="text-sm text-slate-600 mt-1 line-clamp-2">
+                                        {procedimento.descricao}
+                                    </p>
+                                    <div className="flex items-center gap-4 text-xs text-slate-500 mt-2">
+                                        {procedimento.tempo_estimado > 0 && (
+                                            <div className="flex items-center gap-1">
+                                                <Clock className="w-3 h-3" />
+                                                <span>{procedimento.tempo_estimado}h</span>
+                                            </div>
+                                        )}
+                                        {procedimento.checklist?.length > 0 && (
+                                            <div className="flex items-center gap-1">
+                                                <CheckSquare className="w-3 h-3" />
+                                                <span>{procedimento.checklist.length} itens</span>
+                                            </div>
+                                        )}
+>>>>>>> Stashed changes
                                     </div>
                                 </div>
 
                                 <Button
+<<<<<<< Updated upstream
                                     variant="outline"
                                     size="sm"
                                     onClick={() => onEdit(procedimento)}
                                     className="opacity-0 group-hover:opacity-100 transition-opacity"
+=======
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-9 w-9 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+>>>>>>> Stashed changes
                                 >
                                     <Edit className="w-4 h-4 mr-2" />
                                     Editar

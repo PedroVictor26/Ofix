@@ -1,10 +1,15 @@
+<<<<<<< Updated upstream
 import React, { useState, useEffect } from "react";
 import { Financeiro, Servico } from "../entities/mock-data"; // Ajuste o caminho conforme necessário
+=======
+import { useState, useEffect } from "react";
+>>>>>>> Stashed changes
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, TrendingUp, TrendingDown, DollarSign, Calendar } from "lucide-react";
 
+<<<<<<< Updated upstream
 import FinanceiroModal from "../components/financeiro/FinanceiroModal";
 import FinanceiroStats from "../components/financeiro/FinanceiroStats";
 import FinanceiroChart from "../components/financeiro/FinanceiroChart";
@@ -14,6 +19,30 @@ export default function FinanceiroPage() {
     const [transacoes, setTransacoes] = useState([]);
     const [servicos, setServicos] = useState([]);
     const [showModal, setShowModal] = useState(false);
+=======
+import { useFinanceiroData } from "@/hooks/useFinanceiroData";
+import FinanceiroChart from "@/components/financeiro/FinanceiroChart";
+import FinanceiroStats from "@/components/financeiro/FinanceiroStats";
+import FinanceiroTable from "@/components/financeiro/FinanceiroTable";
+import FinanceiroModal from "@/components/financeiro/FinanceiroModal";
+import { useFinanceiroContext } from "@/context/FinanceiroContext";
+
+export default function FinanceiroPage() {
+    const {
+        allTransacoes,
+        transacoes,
+        stats,
+        isLoading,
+        error,
+        filterPeriod,
+        setFilterPeriod,
+        reload,
+    } = useFinanceiroData();
+
+    
+
+    const [isModalOpen, setModalOpen] = useState(false);
+>>>>>>> Stashed changes
     const [editingTransacao, setEditingTransacao] = useState(null);
     const [filterPeriod, setFilterPeriod] = useState("month");
     const [isLoading, setIsLoading] = useState(true);
@@ -54,6 +83,7 @@ export default function FinanceiroPage() {
         setEditingTransacao(null);
     };
 
+<<<<<<< Updated upstream
     const getFilteredTransacoes = () => {
         const now = new Date();
         let startDate;
@@ -95,11 +125,23 @@ export default function FinanceiroPage() {
     };
 
     const stats = getStats();
+=======
+    if (error) {
+        return (
+            <div className="p-8 text-center text-red-600">
+                <h1 className="text-2xl font-bold">Ocorreu um Erro</h1>
+                <p>{error}</p>
+                <Button onClick={reload} className="mt-4">Tentar Novamente</Button>
+            </div>
+        );
+    }
+>>>>>>> Stashed changes
 
     return (
         <div className="p-6 space-y-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
             <div className="max-w-7xl mx-auto space-y-8">
                 {/* Header */}
+<<<<<<< Updated upstream
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                     <div>
                         <h1 className="text-4xl font-bold text-slate-900 mb-2">Gestão Financeira</h1>
@@ -125,6 +167,71 @@ export default function FinanceiroPage() {
                             <Plus className="w-5 h-5 mr-2" />
                             Nova Transação
                         </Button>
+=======
+                <header className="mb-8">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h1 className="text-3xl font-bold text-slate-800">Gestão Financeira</h1>
+                            <p className="text-slate-500 mt-1">Acompanhe as entradas e saídas da sua oficina.</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Select value={filterPeriod} onValueChange={setFilterPeriod}>
+                                <SelectTrigger className="w-40">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="today">Hoje</SelectItem>
+                                    <SelectItem value="week">Últimos 7 dias</SelectItem>
+                                    <SelectItem value="month">Este Mês</SelectItem>
+                                    <SelectItem value="year">Este Ano</SelectItem>
+                                    <SelectItem value="all">Tudo</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Button onClick={handleNewTransacao}>
+                                <Plus className="w-4 h-4 mr-2" />
+                                Nova Transação
+                            </Button>
+                        </div>
+                    </div>
+                </header>
+
+                <section className="mb-8">
+                    <FinanceiroStats stats={stats} isLoading={isLoading} filterPeriod={filterPeriod} />
+                </section>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+                    {/* Gráfico */}
+                    <div className="lg:col-span-2">
+                        <Card className="bg-white shadow-sm border-slate-200">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-xl text-slate-800">
+                                    <BarChart2 className="w-5 h-5" />
+                                    Fluxo de Caixa
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <FinanceiroChart transacoes={transacoes} />
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Tabela de Transações Recentes */}
+                    <div className="lg:col-span-1">
+                        <Card className="bg-white shadow-sm border-slate-200">
+                             <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-xl text-slate-800">
+                                    <TrendingUp className="w-5 h-5" />
+                                    Transações Recentes
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <FinanceiroTable 
+                                    transacoes={allTransacoes.sort((a, b) => new Date(b.data) - new Date(a.data))}
+                                    onEditTransacao={handleEditTransacao} 
+                                />
+                            </CardContent>
+                        </Card>
+>>>>>>> Stashed changes
                     </div>
                 </div>
 

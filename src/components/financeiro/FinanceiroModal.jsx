@@ -8,9 +8,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+<<<<<<< Updated upstream
 import { Textarea } from "@/components/ui/textarea";
 import { Fornecedor } from "../../entities/mock-data";
 import { Save, Building2 } from "lucide-react";
+=======
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { createTransacao, updateTransacao } from '@/services/financeiro.service';
+import { Save, Loader2, AlertCircle, TrendingUp, TrendingDown } from "lucide-react";
+>>>>>>> Stashed changes
 
 export default function FornecedorModal({ isOpen, onClose, onSuccess }) {
     const [formData, setFormData] = useState({
@@ -35,6 +41,7 @@ export default function FornecedorModal({ isOpen, onClose, onSuccess }) {
         setIsSaving(true);
 
         try {
+<<<<<<< Updated upstream
             await Fornecedor.create(formData);
 
             setFormData({
@@ -46,9 +53,24 @@ export default function FornecedorModal({ isOpen, onClose, onSuccess }) {
                 observacoes: ''
             });
 
+=======
+            const dadosTransacao = { ...formData, valor: parseFloat(formData.valor) };
+            if (transacao) {
+                await updateTransacao(transacao.id, dadosTransacao);
+            } else {
+                await createTransacao(dadosTransacao);
+            }
+>>>>>>> Stashed changes
             onSuccess();
         } catch (error) {
+<<<<<<< Updated upstream
             console.error("Erro ao salvar fornecedor:", error);
+=======
+            console.error("Erro ao salvar transação:", error);
+            // Opcional: Adicionar um estado para exibir uma mensagem de erro no modal
+        } finally {
+            setIsSaving(false);
+>>>>>>> Stashed changes
         }
 
         setIsSaving(false);

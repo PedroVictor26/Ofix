@@ -10,8 +10,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+<<<<<<< Updated upstream
 import { MensagemPadrao } from "../../entities/mock-data";
 import { Save, MessageCircle } from "lucide-react";
+=======
+import { Save, Loader2, AlertCircle } from "lucide-react";
+import { createMensagem, updateMensagem } from '@/services/mensagens.service';
+
+const FormError = ({ message }) => (
+    <div className="flex items-center gap-2 text-sm text-red-600 mt-1">
+        <AlertCircle className="w-4 h-4" />
+        <span>{message}</span>
+    </div>
+);
+>>>>>>> Stashed changes
 
 export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) {
     const [formData, setFormData] = useState({
@@ -26,6 +38,7 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
     useEffect(() => {
         if (mensagem) {
             setFormData({
+<<<<<<< Updated upstream
                 nome_mensagem: mensagem.nome_mensagem || '',
                 texto_mensagem: mensagem.texto_mensagem || '',
                 categoria: mensagem.categoria || 'status_update',
@@ -37,6 +50,11 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
                 texto_mensagem: '',
                 categoria: 'status_update',
                 variaveis_disponiveis: ['{cliente_nome}', '{veiculo_modelo}', '{numero_os}', '{data_previsao}']
+=======
+                nome: mensagem?.nome || '',
+                texto: mensagem?.template || '',
+                categoria: mensagem?.categoria || 'status_update',
+>>>>>>> Stashed changes
             });
         }
     }, [mensagem, isOpen]);
@@ -53,14 +71,29 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
 
         try {
             if (mensagem) {
+<<<<<<< Updated upstream
                 await MensagemPadrao.update(mensagem.id, formData);
             } else {
                 await MensagemPadrao.create(formData);
             }
 
+=======
+                // Edição de mensagem existente
+                await updateMensagem(mensagem.id, { nome: formData.nome, template: formData.texto, categoria: formData.categoria });
+            } else {
+                // Criação de nova mensagem
+                await createMensagem({ nome: formData.nome, template: formData.texto, categoria: formData.categoria });
+            }
+>>>>>>> Stashed changes
             onSuccess();
         } catch (error) {
             console.error("Erro ao salvar mensagem:", error);
+<<<<<<< Updated upstream
+=======
+            // TODO: Adicionar feedback de erro para o usuário
+        } finally {
+            setIsSaving(false);
+>>>>>>> Stashed changes
         }
 
         setIsSaving(false);
