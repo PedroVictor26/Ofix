@@ -6,11 +6,8 @@ import {
     Package,
     DollarSign,
     Settings,
-<<<<<<< Updated upstream
     Menu,
     X,
-=======
->>>>>>> Stashed changes
     Wrench,
     Bell,
     Search,
@@ -135,8 +132,8 @@ export default function Layout() {
                     <SidebarHeader className="border-b border-slate-200/60 p-6 bg-gradient-to-r from-blue-50 to-indigo-50">
                         <div className="flex items-center gap-3">
                             <div className="relative group">
-                                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-transform duration-200">
-                                    <Wrench className="w-7 h-7 text-white" />
+                                <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-transform duration-200">
+                                    <img src="/logo.png" alt="OFIX Logo" className="w-full h-full object-contain" />
                                 </div>
                                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-orange-400 to-orange-500 rounded-full flex items-center justify-center shadow-sm status-badge">
                                     <div className="w-2 h-2 bg-white rounded-full"></div>
@@ -302,8 +299,8 @@ export default function Layout() {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="hidden md:flex items-center gap-2">
-                                    <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-                                        <Wrench className="w-4 h-4 text-white" />
+                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+                                        <img src="/logo.png" alt="OFIX Logo" className="w-full h-full object-contain" />
                                     </div>
                                     <h1 className="text-xl font-bold text-slate-900">OFIX - Sistema Operacional</h1>
                                 </div>
@@ -320,8 +317,8 @@ export default function Layout() {
                             <div className="flex items-center gap-4">
                                 <SidebarTrigger className="hover:bg-slate-100 p-2 rounded-lg transition-colors duration-200" />
                                 <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-                                        <Wrench className="w-4 h-4 text-white" />
+                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+                                        <img src="/logo.png" alt="OFIX Logo" className="w-full h-full object-contain" />
                                     </div>
                                     <h1 className="text-xl font-bold text-slate-900">OFIX</h1>
                                 </div>

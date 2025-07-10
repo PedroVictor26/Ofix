@@ -11,8 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Car, Wrench, Phone, Mail, MapPin, Plus, Edit } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 export default function ClienteDetalhes({
     isOpen,
@@ -25,16 +23,8 @@ export default function ClienteDetalhes({
 }) {
     if (!cliente) return null;
 
-    const getStatusColor = (status) => {
-        const colors = {
-            aguardando: "bg-slate-100 text-slate-700",
-            em_andamento: "bg-blue-100 text-blue-700",
-            aguardando_pecas: "bg-orange-100 text-orange-700",
-            aguardando_aprovacao: "bg-purple-100 text-purple-700",
-            finalizado: "bg-green-100 text-green-700"
-        };
-        return colors[status] || "bg-slate-100 text-slate-700";
-    };
+    // A função getStatusColor não está sendo usada, então será removida.
+    // Se for necessária no futuro, pode ser adicionada novamente.
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>

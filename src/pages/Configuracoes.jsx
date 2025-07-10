@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-// DEPOIS (O CÓDIGO CORRIGIDO)
-import { ProcedimentoPadrao, MensagemPadrao } from "../entities/mock-data";
+import { useState, useEffect } from "react";
+import { getMensagens } from '../services/mensagens.service';
+import { getAllProcedimentos } from '../services/procedimentos.service'; // Assumindo que você terá um serviço para procedimentos
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,8 +29,8 @@ export default function Configuracoes() {
         setIsLoading(true);
         try {
             const [procedimentosData, mensagensData] = await Promise.all([
-                ProcedimentoPadrao.list("-created_date"),
-                MensagemPadrao.list("-created_date")
+                getAllProcedimentos(), // Usando o serviço real
+                getMensagens() // Usando o serviço real
             ]);
 
             setProcedimentos(procedimentosData);

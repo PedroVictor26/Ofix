@@ -2,6 +2,7 @@ import * as authService from '../services/auth.service.js';
 
 class AuthController {
   async register(req, res, next) {
+    console.log('Requisição de registro recebida!', req.body);
     try {
       const { nomeUser, emailUser, passwordUser, nomeOficina, cnpjOficina, telefoneOficina, enderecoOficina, userRole } = req.body;
 

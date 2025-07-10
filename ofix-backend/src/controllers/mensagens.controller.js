@@ -31,34 +31,39 @@ export const getMensagemById = async (req, res) => {
 };
 
 export const createMensagem = async (req, res) => {
-  const { nome, texto, categoria } = req.body;
+  const { nome, template, categoria } = req.body;
   const { oficinaId } = req.user; // Assumindo que oficinaId está disponível no req.user
+
+  if (!nome || !template) {
+    return res.status(400).json({ error: 'Nome e texto da mensagem são obrigatórios.' });
+  }
+
   try {
     const newMensagem = await prisma.mensagemPadrao.create({
       data: {
         nome,
-        template: texto,
+        template,
         categoria,
         oficinaId, // Adiciona o oficinaId
       },
     });
     res.status(201).json(newMensagem);
   } catch (error) {
-    console.error("Erro ao criar mensagem:", error);
-    res.status(500).json({ error: "Erro interno do servidor." });
+    console.error("Erro ao criar mensagem:", error.message, error.stack);
+    res.status(500).json({ error: "Erro interno do servidor ao criar mensagem.", details: error.message });
   }
 };
 
 export const updateMensagem = async (req, res) => {
   const { id } = req.params;
-  const { nome, texto, categoria } = req.body;
+  const { nome, template, categoria } = req.body;
   const { oficinaId } = req.user; // Assumindo que oficinaId está disponível no req.user
   try {
     const updatedMensagem = await prisma.mensagemPadrao.update({
       where: { id, oficinaId }, // Adiciona oficinaId na condição de atualização
       data: {
         nome,
-        template: texto,
+        template,
         categoria,
       },
     });

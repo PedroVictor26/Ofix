@@ -54,13 +54,18 @@ export function useFinanceiroData() {
         }
         return transacoes.filter(t => {
             const transactionDate = new Date(t.data);
+            // Verifica se a data é válida antes de comparar
+            if (isNaN(transactionDate.getTime())) {
+                console.warn("Data de transação inválida no useFinanceiroData, ignorando:", t.data);
+                return false; // Ignora transações com datas inválidas
+            }
             return transactionDate >= startDate && transactionDate <= endDate;
         });
     }, [transacoes, filterPeriod]);
 
     const stats = useMemo(() => {
-        const entradas = filteredTransacoes.filter(t => t.tipo === 'Entrada').reduce((sum, t) => sum + t.valor, 0);
-        const saidas = filteredTransacoes.filter(t => t.tipo === 'Saída').reduce((sum, t) => sum + t.valor, 0);
+        const entradas = filteredTransacoes.filter(t => t.tipo.toLowerCase() === 'entrada').reduce((sum, t) => sum + t.valor, 0);
+        const saidas = filteredTransacoes.filter(t => t.tipo.toLowerCase() === 'saida').reduce((sum, t) => sum + t.valor, 0);
         const saldo = entradas - saidas;
         return { entradas, saidas, saldo, totalTransacoes: filteredTransacoes.length };
     }, [filteredTransacoes]);

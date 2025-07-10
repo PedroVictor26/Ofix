@@ -3,7 +3,10 @@ import apiClient from './api';
 export const getAllTransacoes = async () => {
   try {
     const response = await apiClient.get('/financeiro');
-    return response.data;
+    console.log("Dados brutos das transações financeiras:", response.data);
+    // Filtra transações com datas inválidas ou nulas
+    const validTransacoes = response.data.filter(t => t.data && !isNaN(new Date(t.data).getTime()));
+    return validTransacoes;
   } catch (error) {
     console.error("Erro ao buscar transações financeiras:", error.response?.data?.error || error.message);
     throw error.response?.data || { message: error.message || "Erro desconhecido ao buscar transações financeiras." };

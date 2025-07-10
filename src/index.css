@@ -83,8 +83,6 @@
     background-color: var(--background);
     color: var(--foreground);
   }
-<<<<<<< Updated upstream
-=======
 }
 
 /* Correção suave para o Dialog */
@@ -99,6 +97,7 @@
 /* Correção específica para Dialog do shadcn/ui */
 [data-radix-dialog-overlay] {
   z-index: 999;
+  background-color: rgba(0, 0, 0, 0.5); /* Fundo escurecido */
 }
 
 [data-radix-dialog-content] {
@@ -106,18 +105,6 @@
 }
 
 @layer components {
-  .sidebar-transition {
-    
-  }
-
-  .nav-item-active {
-    @apply bg-gradient-to-br from-nav-item-active-start to-nav-item-active-end border-l-4 border-primary-blue shadow-sm;
-  }
-
-  .nav-item-hover:hover {
-    @apply bg-gradient-to-br from-nav-item-hover-start to-nav-item-hover-end translate-x-0.5;
-  }
-
   .status-badge {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
@@ -133,5 +120,4 @@
   50% {
     opacity: .8;
   }
->>>>>>> Stashed changes
 }

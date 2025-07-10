@@ -7,6 +7,7 @@ import { MessageCircle, Edit, Hash } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function MensagensList({ mensagens, onEdit, isLoading }) {
+    console.log("Mensagens recebidas no MensagensList:", mensagens);
     const getCategoriaColor = (categoria) => {
         const colors = {
             status_update: "bg-blue-100 text-blue-800",
@@ -75,7 +76,10 @@ export default function MensagensList({ mensagens, onEdit, isLoading }) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
                 >
-                    <Card className="cursor-pointer hover:shadow-lg transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm hover:bg-white group">
+                    <Card 
+                        className="cursor-pointer hover:shadow-lg transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm hover:bg-white group"
+                        onClick={() => onEdit(mensagem)}
+                    >
                         <CardContent className="p-6">
                             <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-4 flex-1">
@@ -86,7 +90,7 @@ export default function MensagensList({ mensagens, onEdit, isLoading }) {
                                     <div className="flex-1">
                                         <div className="flex items-start gap-3 mb-2">
                                             <h3 className="text-lg font-bold text-slate-900">
-                                                {mensagem.nome_mensagem}
+                                                {mensagem.nome}
                                             </h3>
                                             <Badge className={getCategoriaColor(mensagem.categoria)}>
                                                 {getCategoriaLabel(mensagem.categoria)}
@@ -94,48 +98,23 @@ export default function MensagensList({ mensagens, onEdit, isLoading }) {
                                         </div>
 
                                         <p className="text-sm text-slate-600 mb-3 line-clamp-3">
-                                            {mensagem.texto_mensagem}
+                                            {mensagem.template}
                                         </p>
 
-                                        {mensagem.variaveis_disponiveis?.length > 0 && (
-                                            <div className="flex items-center gap-1 text-xs text-slate-500">
-                                                <Hash className="w-3 h-3" />
-                                                <span>{mensagem.variaveis_disponiveis.length} variáveis</span>
-                                            </div>
-                                        )}
+                                        {/* Removido variaveis_disponiveis pois não está no modelo atual */}
                                     </div>
                                 </div>
 
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => onEdit(mensagem)}
+                                    onClick={(e) => e.stopPropagation()} // Adicionado stopPropagation
                                     className="opacity-0 group-hover:opacity-100 transition-opacity"
                                 >
                                     <Edit className="w-4 h-4 mr-2" />
                                     Editar
                                 </Button>
                             </div>
-
-                            {mensagem.variaveis_disponiveis?.length > 0 && (
-                                <div className="mt-4 pt-4 border-t border-slate-100">
-                                    <div className="space-y-1">
-                                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Variáveis Disponíveis:</p>
-                                        <div className="flex flex-wrap gap-1">
-                                            {mensagem.variaveis_disponiveis.slice(0, 6).map((variavel, idx) => (
-                                                <Badge key={idx} variant="outline" className="text-xs">
-                                                    {variavel}
-                                                </Badge>
-                                            ))}
-                                            {mensagem.variaveis_disponiveis.length > 6 && (
-                                                <Badge variant="outline" className="text-xs text-slate-500">
-                                                    +{mensagem.variaveis_disponiveis.length - 6} mais
-                                                </Badge>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                         </CardContent>
                     </Card>
                 </motion.div>

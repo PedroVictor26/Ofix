@@ -1,9 +1,4 @@
 import prisma from '../config/database.js'; // Importa a instância do Prisma Client
-<<<<<<< Updated upstream
-=======
-
-// A linha "import { ServiceStatus } from '@prisma/client';" foi removida daqui.
->>>>>>> Stashed changes
 
 class ServicosController {
   async createServico(req, res, next) {
@@ -15,8 +10,8 @@ class ServicosController {
         observacoes, clienteId, veiculoId, responsavelId
       } = req.body;
 
-      // const oficinaId = req.user?.oficinaId; // Descomentar quando auth estiver pronto
-      const oficinaId = "mock-oficina-id"; // Placeholder - REMOVER EM PRODUÇÃO
+      const oficinaId = req.user?.oficinaId; // Descomentar quando auth estiver pronto
+      // const oficinaId = "mock-oficina-id"; // Placeholder - REMOVER EM PRODUÇÃO
 
       if (!oficinaId) {
         return res.status(401).json({ error: 'Oficina não identificada. Acesso não autorizado.' });
@@ -63,9 +58,6 @@ class ServicosController {
           ...(responsavelId && { responsavel: { connect: { id: responsavelId } } }),
           oficina: { connect: { id: oficinaId } },
         },
-<<<<<<< Updated upstream
-        include: { // Inclui dados relacionados na resposta
-=======
         select: {
             id: true,
             numeroOs: true,
@@ -78,7 +70,6 @@ class ServicosController {
             veiculoId: true,
             responsavelId: true,
             oficinaId: true,
->>>>>>> Stashed changes
             cliente: { select: { id: true, nomeCompleto: true } },
             veiculo: { select: { id: true, placa: true, modelo: true } },
             responsavel: { select: { id: true, nome: true } },
@@ -98,8 +89,8 @@ class ServicosController {
 
   async getAllServicos(req, res, next) {
     try {
-      // const oficinaId = req.user?.oficinaId; // Descomentar quando auth estiver pronto
-      const oficinaId = "mock-oficina-id"; // Placeholder - REMOVER EM PRODUÇÃO
+      const oficinaId = req.user?.oficinaId; // Descomentar quando auth estiver pronto
+      // const oficinaId = "mock-oficina-id"; // Placeholder - REMOVER EM PRODUÇÃO
       if (!oficinaId) {
         return res.status(401).json({ error: 'Oficina não identificada.' });
       }
@@ -116,13 +107,8 @@ class ServicosController {
       const servicos = await prisma.servico.findMany({
         where: whereConditions,
         include: {
-<<<<<<< Updated upstream
             cliente: { select: { id: true, nomeCompleto: true } },
             veiculo: { select: { id: true, placa: true, modelo: true } },
-=======
-            cliente: true,
-            veiculo: true,
->>>>>>> Stashed changes
             responsavel: { select: { id: true, nome: true } },
         },
         orderBy: {
@@ -138,12 +124,7 @@ class ServicosController {
   async getServicoById(req, res, next) {
     try {
       const { id } = req.params;
-<<<<<<< Updated upstream
-      // const oficinaId = req.user?.oficinaId; // Descomentar
-      const oficinaId = "mock-oficina-id"; // Placeholder
-=======
       const oficinaId = req.user?.oficinaId;
->>>>>>> Stashed changes
       if (!oficinaId) {
         return res.status(401).json({ error: 'Oficina não identificada.' });
       }
@@ -171,17 +152,12 @@ class ServicosController {
   async updateServico(req, res, next) {
     try {
       const { id } = req.params;
-<<<<<<< Updated upstream
-      // const oficinaId = req.user?.oficinaId; // Descomentar
-      const oficinaId = "mock-oficina-id"; // Placeholder
-=======
       const oficinaId = req.user?.oficinaId;
->>>>>>> Stashed changes
       if (!oficinaId) {
         return res.status(401).json({ error: 'Oficina não identificada.' });
       }
 
-      const { clienteId, veiculoId, responsavelId, ...updateData } = req.body;
+      const { clienteId, veiculoId, responsavelId, status, ...updateData } = req.body;
 
       const servicoExistente = await prisma.servico.findUnique({
         where: { id, oficinaId },
@@ -202,15 +178,12 @@ class ServicosController {
       }
       if (responsavelId && responsavelId !== servicoExistente.responsavelId) {
         const responsavelExists = await prisma.user.findUnique({ where: { id: responsavelId, oficinaId }});
-        if (!responsavelExists) return res.status(404).json({ error: 'Novo responsável não encontrado.' });
+        if (!responsavelExists) return res.status(44).json({ error: 'Novo responsável não encontrado.' });
         updateData.responsavelId = responsavelId;
       } else if (responsavelId === null) {
         updateData.responsavelId = null;
       }
 
-<<<<<<< Updated upstream
-=======
-      // <<-- AQUI ESTÁ A CORREÇÃO -->>
       if (status) {
         const statusValidos = [
           'AGUARDANDO', 'EM_ANDAMENTO', 'AGUARDANDO_PECAS', 
@@ -221,8 +194,6 @@ class ServicosController {
         }
         updateData.status = status;
       }
-      // <<-- FIM DA CORREÇÃO -->>
->>>>>>> Stashed changes
 
       if (updateData.dataEntrada) updateData.dataEntrada = new Date(updateData.dataEntrada);
       if (updateData.dataPrevisaoEntrega) updateData.dataPrevisaoEntrega = new Date(updateData.dataPrevisaoEntrega);
@@ -253,12 +224,7 @@ class ServicosController {
   async deleteServico(req, res, next) {
     try {
       const { id } = req.params;
-<<<<<<< Updated upstream
-      // const oficinaId = req.user?.oficinaId; // Descomentar
-      const oficinaId = "mock-oficina-id"; // Placeholder
-=======
       const oficinaId = req.user?.oficinaId;
->>>>>>> Stashed changes
       if (!oficinaId) {
         return res.status(401).json({ error: 'Oficina não identificada.' });
       }

@@ -25,7 +25,6 @@ export default function ServiceModal({ isOpen, onClose, service, onUpdate, clien
     const [procedimentos, setProcedimentos] = useState([]);
     const [mensagens, setMensagens] = useState([]);
     const [pecas, setPecas] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         if (isOpen && service) {
@@ -34,7 +33,6 @@ export default function ServiceModal({ isOpen, onClose, service, onUpdate, clien
     }, [isOpen, service]);
 
     const loadData = async () => {
-        setIsLoading(true);
         try {
             const [procedimentosData, mensagensData, pecasData] = await Promise.all([
                 ProcedimentoPadrao.list(),
@@ -48,7 +46,6 @@ export default function ServiceModal({ isOpen, onClose, service, onUpdate, clien
         } catch (error) {
             console.error("Erro ao carregar dados:", error);
         }
-        setIsLoading(false);
     };
 
     // onUpdate agora é reloadDashboard

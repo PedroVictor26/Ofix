@@ -199,6 +199,7 @@ export default function Dashboard() {
         <DndContext
             sensors={sensors}
             collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
             <div className="p-6 space-y-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">

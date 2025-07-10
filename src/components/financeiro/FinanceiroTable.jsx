@@ -5,13 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Edit, TrendingUp, TrendingDown } from "lucide-react";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 export default function FinanceiroTable({ transacoes, servicos, onEdit, isLoading }) {
 
     const getServicoInfo = (servicoId) => {
-        const servico = servicos.find(s => s.id === servicoId);
-        return servico ? `OS #${servico.numero_os}` : 'N/A';
+        const servico = servicos?.find(s => s.id === servicoId);
+        return servico ? `OS #${servico.numeroOs}` : '-'; // Alterado para numeroOs
     };
 
     const getTypeBadge = (type) => {
@@ -22,11 +21,14 @@ export default function FinanceiroTable({ transacoes, servicos, onEdit, isLoadin
                 </Badge>
             );
         }
-        return (
-            <Badge variant="outline" className="text-red-600 border-red-600">
-                <TrendingDown className="w-3 h-3 mr-1" /> Saída
-            </Badge>
-        );
+        if (type === 'saida') {
+            return (
+                <Badge variant="outline" className="text-red-600 border-red-600">
+                    <TrendingDown className="w-3 h-3 mr-1" /> Saída
+                </Badge>
+            );
+        }
+        return '-'; // Caso o tipo seja nulo ou inválido
     };
 
     if (isLoading) {
@@ -53,16 +55,16 @@ export default function FinanceiroTable({ transacoes, servicos, onEdit, isLoadin
             <TableBody>
                 {transacoes.map((t) => (
                     <TableRow key={t.id}>
-                        <TableCell className="font-medium">{t.descricao}</TableCell>
+                        <TableCell className="font-medium">{t.descricao ?? '-'}</TableCell>
                         <TableCell className={t.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'}>
-                            R$ {t.valor.toFixed(2)}
+                            R$ {t.valor?.toFixed(2) ?? '-'}
                         </TableCell>
                         <TableCell>{getTypeBadge(t.tipo)}</TableCell>
                         <TableCell>
-                            <Badge variant="secondary">{t.categoria.replace('_', ' ')}</Badge>
+                            <Badge variant="secondary">{t.categoria?.replace('_', ' ') ?? '-'}</Badge>
                         </TableCell>
-                        <TableCell>{format(new Date(t.data_transacao), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
-                        <TableCell>{getServicoInfo(t.servico_id)}</TableCell>
+                        <TableCell>{t.data ? format(new Date(t.data), 'dd/MM/yyyy') : '-'}</TableCell>
+                        <TableCell>{getServicoInfo(t.servicoId)}</TableCell>
                         <TableCell>
                             <Button variant="ghost" size="icon" onClick={() => onEdit(t)}>
                                 <Edit className="w-4 h-4" />

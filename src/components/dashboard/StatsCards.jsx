@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function StatsCards({ title, value, icon: Icon, gradient }) {
     return (
@@ -26,3 +27,14 @@ export default function StatsCards({ title, value, icon: Icon, gradient }) {
         </motion.div>
     );
 }
+
+export const StatsCardSkeleton = () => {
+    return (
+        <Card className="animate-pulse">
+            <CardContent className="p-4">
+                <Skeleton className="h-6 w-24 mb-2" />
+                <Skeleton className="h-8 w-32" />
+            </CardContent>
+        </Card>
+    );
+};

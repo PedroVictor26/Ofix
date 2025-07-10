@@ -8,7 +8,6 @@ export const getAllTransacoes = async (req, res) => {
   }
 
   try {
-    console.log('Verificando prisma.financeiro:', prisma.financeiro); // Adicionado para depuração
     const transacoes = await prisma.financeiro.findMany({
       where: { oficinaId },
     });
@@ -86,7 +85,7 @@ export const getTransacaoById = async (req, res) => {
 };
 
 export const createTransacao = async (req, res) => {
-  const { descricao, valor, tipo, categoria, data, servicoId } = req.body;
+  const { descricao, valor, tipo, categoria, data, servicoId, clienteId } = req.body;
   const oficinaId = req.user?.oficinaId; // Extrai o oficinaId
 
   if (!oficinaId) {
@@ -94,21 +93,26 @@ export const createTransacao = async (req, res) => {
   }
 
   try {
+    const dataToCreate = {
+      descricao,
+      valor: parseFloat(valor),
+      tipo,
+      categoria,
+      data: new Date(data),
+      oficina: { connect: { id: oficinaId } },
+    };
+
+    if (servicoId) {
+      dataToCreate.servico = { connect: { id: servicoId } };
+    }
+
     const newTransacao = await prisma.financeiro.create({
-      data: {
-        descricao,
-        valor,
-        tipo,
-        categoria,
-        data: new Date(data),
-        servicoId,
-        oficina: { connect: { id: oficinaId } }, // Associa à oficina
-      },
+      data: dataToCreate,
     });
     res.status(201).json(newTransacao);
   } catch (error) {
-    console.error("Erro ao criar transação:", error);
-    res.status(500).json({ error: "Erro interno do servidor." });
+    console.error("Erro ao criar transação:", error.message, error.stack);
+    res.status(500).json({ error: "Erro interno do servidor ao criar transação.", details: error.message });
   }
 };
 
@@ -135,7 +139,7 @@ export const updateTransacao = async (req, res) => {
       where: { id }, // A atualização ainda usa apenas o ID
       data: {
         descricao,
-        valor,
+        valor: parseFloat(valor), // Converte para float
         tipo,
         categoria,
         data: new Date(data),

@@ -10,15 +10,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ProcedimentoPadrao } from "../../entities/mock-data";
+import { createProcedimento, updateProcedimento } from '../../services/procedimentos.service';
 import { Save, Wrench, Plus, X } from "lucide-react";
 
 export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuccess }) {
     const [formData, setFormData] = useState({
-        nome_procedimento: '',
-        descricao_padrao: '',
-        checklist_padrao: [],
-        tempo_estimado: 0,
+        nome: '',
+        descricao: '',
+        checklist: [],
+        tempoEstimadoHoras: 0,
         categoria: 'manutencao_preventiva'
     });
 
@@ -28,18 +28,18 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
     useEffect(() => {
         if (procedimento) {
             setFormData({
-                nome_procedimento: procedimento.nome_procedimento || '',
-                descricao_padrao: procedimento.descricao_padrao || '',
-                checklist_padrao: procedimento.checklist_padrao || [],
-                tempo_estimado: procedimento.tempo_estimado || 0,
+                nome: procedimento.nome || '',
+                descricao: procedimento.descricao || '',
+                checklist: procedimento.checklistJson ? JSON.parse(procedimento.checklistJson) : [],
+                tempoEstimadoHoras: procedimento.tempoEstimadoHoras || 0,
                 categoria: procedimento.categoria || 'manutencao_preventiva'
             });
         } else {
             setFormData({
-                nome_procedimento: '',
-                descricao_padrao: '',
-                checklist_padrao: [],
-                tempo_estimado: 0,
+                nome: '',
+                descricao: '',
+                checklist: [],
+                tempoEstimadoHoras: 0,
                 categoria: 'manutencao_preventiva'
             });
         }
@@ -48,7 +48,7 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.nome_procedimento || !formData.descricao_padrao) {
+        if (!formData.nome || !formData.descricao) {
             alert("Preencha os campos obrigatórios!");
             return;
         }
@@ -56,30 +56,38 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
         setIsSaving(true);
 
         try {
+            const dataToSave = {
+                nome: formData.nome,
+                descricao: formData.descricao,
+                tempoEstimadoHoras: parseFloat(formData.tempoEstimadoHoras) || 0,
+                checklistJson: JSON.stringify(formData.checklist),
+                categoria: formData.categoria,
+            };
+
             if (procedimento) {
-                await ProcedimentoPadrao.update(procedimento.id, formData);
+                await updateProcedimento(procedimento.id, dataToSave);
             } else {
-                await ProcedimentoPadrao.create(formData);
+                await createProcedimento(dataToSave);
             }
 
             onSuccess();
         } catch (error) {
             console.error("Erro ao salvar procedimento:", error);
+        } finally {
+            setIsSaving(false);
         }
-
-        setIsSaving(false);
     };
 
     const addChecklistItem = () => {
         if (checklistItem.trim()) {
             setFormData({
                 ...formData,
-                checklist_padrao: [
-                    ...formData.checklist_padrao,
+                checklist: [
+                    ...formData.checklist,
                     {
                         item: checklistItem.trim(),
                         obrigatorio: false,
-                        ordem: formData.checklist_padrao.length + 1
+                        ordem: formData.checklist.length + 1
                     }
                 ]
             });
@@ -88,10 +96,10 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
     };
 
     const removeChecklistItem = (index) => {
-        const updatedChecklist = formData.checklist_padrao.filter((_, i) => i !== index);
+        const updatedChecklist = formData.checklist.filter((_, i) => i !== index);
         setFormData({
             ...formData,
-            checklist_padrao: updatedChecklist
+            checklist: updatedChecklist
         });
     };
 
@@ -108,7 +116,7 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white shadow-lg">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                         <Wrench className="w-6 h-6" />
@@ -119,11 +127,11 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="nome_procedimento">Nome do Procedimento *</Label>
+                            <Label htmlFor="nome">Nome do Procedimento *</Label>
                             <Input
-                                id="nome_procedimento"
-                                value={formData.nome_procedimento}
-                                onChange={(e) => setFormData({ ...formData, nome_procedimento: e.target.value })}
+                                id="nome"
+                                value={formData.nome}
+                                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                                 placeholder="Ex: Troca de Óleo"
                                 required
                             />
@@ -147,23 +155,23 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
                     </div>
 
                     <div>
-                        <Label htmlFor="tempo_estimado">Tempo Estimado (horas)</Label>
+                        <Label htmlFor="tempoEstimadoHoras">Tempo Estimado (horas)</Label>
                         <Input
-                            id="tempo_estimado"
+                            id="tempoEstimadoHoras"
                             type="number"
                             step="0.5"
-                            value={formData.tempo_estimado}
-                            onChange={(e) => setFormData({ ...formData, tempo_estimado: parseFloat(e.target.value) || 0 })}
+                            value={formData.tempoEstimadoHoras}
+                            onChange={(e) => setFormData({ ...formData, tempoEstimadoHoras: parseFloat(e.target.value) || 0 })}
                             placeholder="1.5"
                         />
                     </div>
 
                     <div>
-                        <Label htmlFor="descricao_padrao">Descrição Padrão *</Label>
+                        <Label htmlFor="descricao">Descrição Padrão *</Label>
                         <Textarea
-                            id="descricao_padrao"
-                            value={formData.descricao_padrao}
-                            onChange={(e) => setFormData({ ...formData, descricao_padrao: e.target.value })}
+                            id="descricao"
+                            value={formData.descricao}
+                            onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
                             placeholder="Descreva o procedimento detalhadamente..."
                             className="h-24"
                             required
@@ -184,9 +192,9 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
                             </Button>
                         </div>
 
-                        {formData.checklist_padrao.length > 0 && (
+                        {formData.checklist.length > 0 && (
                             <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-3">
-                                {formData.checklist_padrao.map((item, index) => (
+                                {formData.checklist.map((item, index) => (
                                     <div key={index} className="flex items-center justify-between bg-slate-50 p-2 rounded">
                                         <span className="flex-1">{item.item}</span>
                                         <Button

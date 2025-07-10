@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ServiceCard from './ServiceCard';
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { useDroppable, useDndMonitor } from "@dnd-kit/core";
+import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import DraggableServiceCard from './DraggableServiceCard'; // Criaremos este componente
 

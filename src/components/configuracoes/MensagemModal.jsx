@@ -10,11 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-<<<<<<< Updated upstream
-import { MensagemPadrao } from "../../entities/mock-data";
-import { Save, MessageCircle } from "lucide-react";
-=======
-import { Save, Loader2, AlertCircle } from "lucide-react";
+import { Save, Loader2, AlertCircle, MessageCircle } from "lucide-react";
 import { createMensagem, updateMensagem } from '@/services/mensagens.service';
 
 const FormError = ({ message }) => (
@@ -23,14 +19,12 @@ const FormError = ({ message }) => (
         <span>{message}</span>
     </div>
 );
->>>>>>> Stashed changes
 
 export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) {
     const [formData, setFormData] = useState({
-        nome_mensagem: '',
-        texto_mensagem: '',
+        nome: '',
+        texto: '',
         categoria: 'status_update',
-        variaveis_disponiveis: []
     });
 
     const [isSaving, setIsSaving] = useState(false);
@@ -38,23 +32,15 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
     useEffect(() => {
         if (mensagem) {
             setFormData({
-<<<<<<< Updated upstream
-                nome_mensagem: mensagem.nome_mensagem || '',
-                texto_mensagem: mensagem.texto_mensagem || '',
-                categoria: mensagem.categoria || 'status_update',
-                variaveis_disponiveis: mensagem.variaveis_disponiveis || []
-            });
-        } else {
-            setFormData({
-                nome_mensagem: '',
-                texto_mensagem: '',
-                categoria: 'status_update',
-                variaveis_disponiveis: ['{cliente_nome}', '{veiculo_modelo}', '{numero_os}', '{data_previsao}']
-=======
                 nome: mensagem?.nome || '',
                 texto: mensagem?.template || '',
                 categoria: mensagem?.categoria || 'status_update',
->>>>>>> Stashed changes
+            });
+        } else {
+            setFormData({
+                nome: '',
+                texto: '',
+                categoria: 'status_update',
             });
         }
     }, [mensagem, isOpen]);
@@ -62,7 +48,7 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.nome_mensagem || !formData.texto_mensagem) {
+        if (!formData.nome || !formData.texto) {
             alert("Preencha os campos obrigatórios!");
             return;
         }
@@ -71,32 +57,19 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
 
         try {
             if (mensagem) {
-<<<<<<< Updated upstream
-                await MensagemPadrao.update(mensagem.id, formData);
-            } else {
-                await MensagemPadrao.create(formData);
-            }
-
-=======
                 // Edição de mensagem existente
                 await updateMensagem(mensagem.id, { nome: formData.nome, template: formData.texto, categoria: formData.categoria });
             } else {
                 // Criação de nova mensagem
                 await createMensagem({ nome: formData.nome, template: formData.texto, categoria: formData.categoria });
             }
->>>>>>> Stashed changes
             onSuccess();
         } catch (error) {
             console.error("Erro ao salvar mensagem:", error);
-<<<<<<< Updated upstream
-=======
             // TODO: Adicionar feedback de erro para o usuário
         } finally {
             setIsSaving(false);
->>>>>>> Stashed changes
         }
-
-        setIsSaving(false);
     };
 
     const categorias = [
@@ -123,19 +96,19 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
         const textarea = document.getElementById('texto_mensagem');
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        const text = formData.texto_mensagem;
+        const text = formData.texto;
         const before = text.substring(0, start);
         const after = text.substring(end, text.length);
 
         setFormData({
             ...formData,
-            texto_mensagem: before + variavel + after
+            texto: before + variavel + after
         });
     };
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white shadow-lg">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                         <MessageCircle className="w-6 h-6" />
@@ -146,11 +119,11 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <Label htmlFor="nome_mensagem">Nome da Mensagem *</Label>
+                            <Label htmlFor="nome">Nome da Mensagem *</Label>
                             <Input
-                                id="nome_mensagem"
-                                value={formData.nome_mensagem}
-                                onChange={(e) => setFormData({ ...formData, nome_mensagem: e.target.value })}
+                                id="nome"
+                                value={formData.nome}
+                                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                                 placeholder="Ex: Serviço Concluído"
                                 required
                             />
@@ -177,8 +150,8 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
                         <Label htmlFor="texto_mensagem">Texto da Mensagem *</Label>
                         <Textarea
                             id="texto_mensagem"
-                            value={formData.texto_mensagem}
-                            onChange={(e) => setFormData({ ...formData, texto_mensagem: e.target.value })}
+                            value={formData.texto}
+                            onChange={(e) => setFormData({ ...formData, texto: e.target.value })}
                             placeholder="Olá {cliente_nome}, seu veículo {veiculo_modelo} está pronto..."
                             className="h-32"
                             required
@@ -207,7 +180,7 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
                     <div className="bg-blue-50 p-4 rounded-lg">
                         <h4 className="font-medium text-blue-900 mb-2">Preview da Mensagem:</h4>
                         <p className="text-sm text-blue-800">
-                            {formData.texto_mensagem
+                            {formData.texto
                                 .replace(/{cliente_nome}/g, 'João Silva')
                                 .replace(/{veiculo_modelo}/g, 'Honda Civic')
                                 .replace(/{veiculo_placa}/g, 'ABC-1234')

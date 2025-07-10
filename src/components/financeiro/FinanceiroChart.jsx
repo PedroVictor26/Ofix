@@ -2,11 +2,15 @@ import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 const processDataForChart = (transacoes) => {
     const groupedData = transacoes.reduce((acc, t) => {
-        const date = format(new Date(t.data_transacao), 'dd/MM');
+        const transactionDate = new Date(t.data);
+        if (isNaN(transactionDate.getTime())) { // Verifica se a data é válida
+            console.warn("Data de transação inválida encontrada, ignorando:", t.data);
+            return acc;
+        }
+        const date = format(transactionDate, 'dd/MM');
         if (!acc[date]) {
             acc[date] = { date, entrada: 0, saida: 0 };
         }
@@ -18,7 +22,13 @@ const processDataForChart = (transacoes) => {
         return acc;
     }, {});
 
-    return Object.values(groupedData).sort((a, b) => new Date(a.date.split('/').reverse().join('-')) - new Date(b.date.split('/').reverse().join('-')));
+    return Object.values(groupedData).sort((a, b) => {
+        const [dayA, monthA] = a.date.split('/');
+        const [dayB, monthB] = b.date.split('/');
+        const dateA = new Date(new Date().getFullYear(), monthA - 1, dayA);
+        const dateB = new Date(new Date().getFullYear(), monthB - 1, dayB);
+        return dateA.getTime() - dateB.getTime();
+    });
 };
 
 export default function FinanceiroChart({ transacoes }) {

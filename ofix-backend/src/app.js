@@ -17,7 +17,7 @@ class Application {
   }
 
   setupRoutes() {
-    this.server.use('/api', routes); // Todas as rotas serão prefixadas com /api
+    this.server.use('/', routes); // Todas as rotas serão montadas na raiz
     this.server.get('/', (req, res) => { // Rota raiz para health check ou boas-vindas
       res.json({ message: 'Bem-vindo à API OFIX!' });
     });
