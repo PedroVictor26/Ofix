@@ -6,8 +6,8 @@ const CustomTooltip = ({ active, payload, label }) => {
         return (
             <div className="bg-white p-3 rounded-lg shadow-lg border border-slate-200">
                 <p className="font-semibold text-slate-700">{label}</p>
-                <p className="text-sm text-green-600">{`Entradas: R$ ${payload[0].value.toFixed(2)}`}</p>
-                <p className="text-sm text-red-600">{`Saídas: R$ ${payload[1].value.toFixed(2)}`}</p>
+                <p className="text-sm text-green-600">{`Entradas: R$ ${parseFloat(payload[0].value).toFixed(2)}`}</p>
+                <p className="text-sm text-red-600">{`Saídas: R$ ${parseFloat(payload[1].value).toFixed(2)}`}</p>
             </div>
         );
     }
@@ -22,9 +22,9 @@ export default function FinanceiroChart({ transacoes }) {
                 acc[date] = { date, entradas: 0, saidas: 0 };
             }
             if (t.tipo === 'Entrada') {
-                acc[date].entradas += t.valor;
+                acc[date].entradas += parseFloat(t.valor);
             } else {
-                acc[date].saidas += t.valor;
+                acc[date].saidas += parseFloat(t.valor);
             }
             return acc;
         }, {});

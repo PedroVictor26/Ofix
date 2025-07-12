@@ -18,7 +18,7 @@ export function useFinanceiroData() {
                 getAllTransacoes(),
             ]);
             setServicos(servicosData || []);
-            setTransacoes(transacoesData || []);
+            setTransacoes(transacoesData.map(t => ({ ...t, valor: parseFloat(t.valor) })) || []);
         } catch (err) {
             console.error("Erro ao carregar dados financeiros:", err);
             setError(err.message || "Falha ao carregar dados.");

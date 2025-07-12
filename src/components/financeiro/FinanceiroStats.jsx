@@ -4,27 +4,31 @@ import StatsCards, { StatsCardSkeleton } from "@/components/dashboard/StatsCards
 export default function FinanceiroStats({ stats, isLoading }) {
     const { entradas, saidas, saldo } = stats;
 
+    const parsedEntradas = parseFloat(entradas || 0);
+    const parsedSaidas = parseFloat(saidas || 0);
+    const parsedSaldo = parseFloat(saldo || 0);
+
     const statItems = [
         {
             title: "Total de Entradas",
-            value: `R$ ${entradas.toFixed(2)}`,
+            value: `R$ ${parsedEntradas.toFixed(2)}`,
             icon: TrendingUp,
             color: "text-green-600",
             bgColor: "bg-green-100",
         },
         {
             title: "Total de Saídas",
-            value: `R$ ${saidas.toFixed(2)}`,
+            value: `R$ ${parsedSaidas.toFixed(2)}`,
             icon: TrendingDown,
             color: "text-red-600",
             bgColor: "bg-red-100",
         },
         {
             title: "Saldo Líquido",
-            value: `R$ ${saldo.toFixed(2)}`,
+            value: `R$ ${parsedSaldo.toFixed(2)}`,
             icon: Scale,
-            color: saldo >= 0 ? "text-blue-600" : "text-red-600",
-            bgColor: saldo >= 0 ? "bg-blue-100" : "bg-red-100",
+            color: parsedSaldo >= 0 ? "text-blue-600" : "text-red-600",
+            bgColor: parsedSaldo >= 0 ? "bg-blue-100" : "bg-red-100",
         },
     ];
 

@@ -37,6 +37,12 @@ export const getTransacaoById = async (req, res) => {
 
 export const createTransacao = async (req, res) => {
   const { descricao, valor, tipo, categoria, data, servicoId } = req.body;
+  const oficinaId = req.user?.oficinaId;
+
+  if (!oficinaId) {
+    return res.status(400).json({ error: 'Usuário não está associado a uma oficina.' });
+  }
+
   try {
     const newTransacao = await prisma.financeiro.create({
       data: {
@@ -46,6 +52,7 @@ export const createTransacao = async (req, res) => {
         categoria,
         data: new Date(data),
         servicoId,
+        oficinaId, // Adicionado oficinaId
       },
     });
     res.status(201).json(newTransacao);
@@ -58,9 +65,15 @@ export const createTransacao = async (req, res) => {
 export const updateTransacao = async (req, res) => {
   const { id } = req.params;
   const { descricao, valor, tipo, categoria, data, servicoId } = req.body;
+  const oficinaId = req.user?.oficinaId;
+
+  if (!oficinaId) {
+    return res.status(400).json({ error: 'Usuário não está associado a uma oficina.' });
+  }
+
   try {
     const updatedTransacao = await prisma.financeiro.update({
-      where: { id },
+      where: { id, oficinaId }, // Adicionado oficinaId ao where
       data: {
         descricao,
         valor,

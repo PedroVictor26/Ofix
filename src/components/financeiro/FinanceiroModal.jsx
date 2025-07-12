@@ -1,3 +1,4 @@
+import { createTransacao, updateTransacao } from "@/services/financeiro.service";
 import { useState, useEffect } from 'react';
 import {
     Dialog,
@@ -78,12 +79,24 @@ export default function FinanceiroModal({ isOpen, onClose, transacao, onSuccess 
 
         setIsSaving(true);
         try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            console.log("Salvando transação:", { ...formData, valor: parseFloat(formData.valor) });
+            if (transacao) {
+                await updateTransacao(transacao.id, {
+                    ...formData,
+                    valor: parseFloat(formData.valor),
+                    data: formData.data,
+                });
+            } else {
+                await createTransacao({
+                    ...formData,
+                    valor: parseFloat(formData.valor),
+                    data: formData.data,
+                });
+            }
             onSuccess();
             onClose();
         } catch (error) {
             console.error("Erro ao salvar transação:", error);
+            setErrors({ form: error.message || "Erro ao salvar transação." });
         } finally {
             setIsSaving(false);
         }
@@ -104,19 +117,19 @@ export default function FinanceiroModal({ isOpen, onClose, transacao, onSuccess 
                 <form onSubmit={handleSubmit} className="grid gap-4 py-4">
                     <div className="grid gap-2">
                         <Label htmlFor="descricao">Descrição *</Label>
-                        <Input id="descricao" value={formData.descricao} onChange={handleInputChange} placeholder="Ex: Venda de peça" className={errors.descricao ? "border-red-500" : ""} />
+                        <Input id="descricao" value={formData.descricao || ''} onChange={handleInputChange} placeholder="Ex: Venda de peça" className={errors.descricao ? "border-red-500" : ""} />
                         {errors.descricao && <FormError message={errors.descricao} />}
                     </div>
 
                     <div className="grid sm:grid-cols-3 gap-4">
                         <div className="grid gap-2 sm:col-span-2">
                             <Label htmlFor="valor">Valor (R$) *</Label>
-                            <Input id="valor" type="number" value={formData.valor} onChange={handleInputChange} placeholder="0.00" className={errors.valor ? "border-red-500" : ""} />
+                            <Input id="valor" type="number" value={formData.valor || ''} onChange={handleInputChange} placeholder="0.00" className={errors.valor ? "border-red-500" : ""} />
                             {errors.valor && <FormError message={errors.valor} />}
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="tipo">Tipo *</Label>
-                            <Select value={formData.tipo} onValueChange={handleSelectChange}>
+                            <Select value={formData.tipo || ''} onValueChange={handleSelectChange}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Entrada"><span className="flex items-center gap-2"><TrendingUp className="w-4 h-4 text-green-600" /> Entrada</span></SelectItem>
@@ -129,12 +142,12 @@ export default function FinanceiroModal({ isOpen, onClose, transacao, onSuccess 
                     <div className="grid sm:grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="data">Data *</Label>
-                            <Input id="data" type="date" value={formData.data} onChange={handleInputChange} className={errors.data ? "border-red-500" : ""} />
+                            <Input id="data" type="date" value={formData.data || ''} onChange={handleInputChange} className={errors.data ? "border-red-500" : ""} />
                             {errors.data && <FormError message={errors.data} />}
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="categoria">Categoria</Label>
-                            <Input id="categoria" value={formData.categoria} onChange={handleInputChange} placeholder="Ex: Vendas" />
+                            <Input id="categoria" value={formData.categoria || ''} onChange={handleInputChange} placeholder="Ex: Vendas" />
                         </div>
                     </div>
                 </form>

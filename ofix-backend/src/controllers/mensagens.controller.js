@@ -27,12 +27,20 @@ export const getMensagemById = async (req, res) => {
 };
 
 export const createMensagem = async (req, res) => {
-  const { nome, template } = req.body;
+  const { nome, template, categoria } = req.body;
+  const oficinaId = req.user?.oficinaId;
+
+  if (!oficinaId) {
+    return res.status(400).json({ error: 'Usuário não está associado a uma oficina.' });
+  }
+
   try {
     const newMensagem = await prisma.mensagemPadrao.create({
       data: {
         nome,
         template,
+        categoria,
+        oficinaId, // Adicionado oficinaId
       },
     });
     res.status(201).json(newMensagem);
@@ -44,13 +52,20 @@ export const createMensagem = async (req, res) => {
 
 export const updateMensagem = async (req, res) => {
   const { id } = req.params;
-  const { nome, template } = req.body;
+  const { nome, template, categoria } = req.body;
+  const oficinaId = req.user?.oficinaId;
+
+  if (!oficinaId) {
+    return res.status(400).json({ error: 'Usuário não está associado a uma oficina.' });
+  }
+
   try {
     const updatedMensagem = await prisma.mensagemPadrao.update({
-      where: { id },
+      where: { id, oficinaId }, // Adicionado oficinaId ao where
       data: {
         nome,
         template,
+        categoria,
       },
     });
     res.json(updatedMensagem);

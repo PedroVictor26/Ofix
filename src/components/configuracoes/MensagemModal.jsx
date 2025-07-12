@@ -1,3 +1,4 @@
+import { createMensagem, updateMensagem } from "@/services/mensagens.service";
 import { useState, useEffect } from 'react';
 import {
     Dialog,
@@ -22,7 +23,11 @@ const FormError = ({ message }) => (
 );
 
 export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) {
-    const [formData, setFormData] = useState({});
+    const [formData, setFormData] = useState({
+        nome: '',
+        texto: '',
+        categoria: 'status_update',
+    });
     const [errors, setErrors] = useState({});
     const [isSaving, setIsSaving] = useState(false);
 
@@ -61,12 +66,16 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
 
         setIsSaving(true);
         try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            console.log("Salvando mensagem:", formData);
+            if (mensagem) {
+                await updateMensagem(mensagem.id, formData);
+            } else {
+                await createMensagem(formData);
+            }
             onSuccess();
             onClose();
         } catch (error) {
             console.error("Erro ao salvar mensagem:", error);
+            setErrors({ form: error.message || "Erro ao salvar mensagem." });
         } finally {
             setIsSaving(false);
         }
@@ -126,12 +135,12 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
                     <div className="grid sm:grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="nome">Nome da Mensagem *</Label>
-                            <Input id="nome" value={formData.nome} onChange={handleInputChange} placeholder="Ex: Serviço Concluído" className={errors.nome ? "border-red-500" : ""} />
+                            <Input id="nome" value={formData.nome || ''} onChange={handleInputChange} placeholder="Ex: Serviço Concluído" className={errors.nome ? "border-red-500" : ""} />
                             {errors.nome && <FormError message={errors.nome} />}
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="categoria">Categoria</Label>
-                            <Select value={formData.categoria} onValueChange={handleSelectChange}>
+                            <Select value={formData.categoria || ''} onValueChange={handleSelectChange}>
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     {categorias.map(cat => <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>)}
@@ -142,7 +151,7 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
 
                     <div className="grid gap-2">
                         <Label htmlFor="texto">Texto da Mensagem *</Label>
-                        <Textarea id="texto" value={formData.texto} onChange={handleInputChange} placeholder="Olá {cliente_nome}, seu veículo {veiculo_modelo} está pronto..." className={`h-32 ${errors.texto ? "border-red-500" : ""}`} />
+                        <Textarea id="texto" value={formData.texto || ''} onChange={handleInputChange} placeholder="Olá {cliente_nome}, seu veículo {veiculo_modelo} está pronto..." className={`h-32 ${errors.texto ? "border-red-500" : ""}`} />
                         {errors.texto && <FormError message={errors.texto} />}
                     </div>
 

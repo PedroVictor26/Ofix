@@ -250,6 +250,7 @@ model MensagemPadrao {
   codigo      String?  @unique
   nome        String
   template    String
+  categoria   String?
   
   oficinaId   String
   oficina     Oficina  @relation(fields: [oficinaId], references: [id])

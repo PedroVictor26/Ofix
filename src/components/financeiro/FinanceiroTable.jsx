@@ -12,6 +12,7 @@ import { Edit, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 
 const TransactionRow = ({ transacao, onEdit }) => {
     const isEntrada = transacao.tipo === 'Entrada';
+    const parsedValor = parseFloat(transacao.valor || 0);
     return (
         <TableRow className="bg-white hover:bg-slate-50">
             <TableCell>
@@ -19,7 +20,7 @@ const TransactionRow = ({ transacao, onEdit }) => {
                 {transacao.categoria && <div className="text-sm text-slate-500">{transacao.categoria}</div>}
             </TableCell>
             <TableCell className={`font-semibold ${isEntrada ? 'text-green-600' : 'text-red-600'}`}>
-                {isEntrada ? '+' : '-'} R$ {transacao.valor.toFixed(2)}
+                {isEntrada ? '+' : '-'} R$ {parsedValor.toFixed(2)}
             </TableCell>
             <TableCell>
                 <Badge variant={isEntrada ? "success" : "destructive"} className="capitalize">
