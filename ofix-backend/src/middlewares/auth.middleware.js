@@ -36,6 +36,7 @@ export function protectRoute(req, res, next) {
         oficinaId: decoded.oficinaId,
         // ... outros campos do payload que você queira expor
     };
+    console.log('req.user no protectRoute:', req.user); // Adicionado para depuração
     next(); // Prossegue para a próxima função de middleware ou para o controller da rota
   } catch (error) {
     if (error.name === 'TokenExpiredError') {

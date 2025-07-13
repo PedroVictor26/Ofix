@@ -26,8 +26,8 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
     const [formData, setFormData] = useState({
         nome: '',
         descricao: '',
-        checklist: [],
-        tempo_estimado: '',
+        checklistJson: '[]', // Inicializa como string JSON vazia
+        tempoEstimadoHoras: '',
         categoria: 'manutencao_preventiva',
     });
     const [checklistItem, setChecklistItem] = useState('');
@@ -36,11 +36,25 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
 
     useEffect(() => {
         if (isOpen) {
+            let initialChecklistJson = '[]';
+            try {
+                if (procedimento?.checklistJson) {
+                    const parsed = JSON.parse(procedimento.checklistJson);
+                    if (Array.isArray(parsed)) {
+                        initialChecklistJson = JSON.stringify(parsed);
+                    } else {
+                        console.warn("checklistJson from backend is not an array after parsing:", parsed);
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to parse checklistJson from backend:", e);
+            }
+
             setFormData({
                 nome: procedimento?.nome || '',
                 descricao: procedimento?.descricao || '',
-                checklist: procedimento?.checklist || [],
-                tempo_estimado: procedimento?.tempo_estimado || '',
+                checklistJson: initialChecklistJson,
+                tempoEstimadoHoras: procedimento?.tempoEstimadoHoras || '',
                 categoria: procedimento?.categoria || 'manutencao_preventiva',
             });
             setErrors({});
@@ -49,9 +63,9 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
     }, [isOpen, procedimento]);
 
     const handleInputChange = (e) => {
-        const { id, value } = e.target;
-        setFormData(prev => ({ ...prev, [id]: value }));
-        if (errors[id]) setErrors(prev => ({ ...prev, [id]: null }));
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
     };
 
     const handleSelectChange = (value) => {
@@ -60,19 +74,25 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
 
     const addChecklistItem = () => {
         if (checklistItem.trim()) {
-            setFormData(prev => ({
-                ...prev,
-                checklist: [...(prev.checklist || []), { item: checklistItem.trim() }]
-            }));
+            setFormData(prev => {
+                const currentChecklist = prev.checklistJson ? JSON.parse(prev.checklistJson) : [];
+                return {
+                    ...prev,
+                    checklistJson: JSON.stringify([...currentChecklist, { item: checklistItem.trim() }])
+                };
+            });
             setChecklistItem('');
         }
     };
 
     const removeChecklistItem = (index) => {
-        setFormData(prev => ({
-            ...prev,
-            checklist: prev.checklist.filter((_, i) => i !== index)
-        }));
+        setFormData(prev => {
+            const currentChecklist = prev.checklistJson ? JSON.parse(prev.checklistJson) : [];
+            return {
+                ...prev,
+                checklistJson: JSON.stringify(currentChecklist.filter((_, i) => i !== index))
+            };
+        });
     };
 
     const validateForm = () => {
@@ -131,7 +151,7 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
                     <div className="grid sm:grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="nome">Nome do Procedimento *</Label>
-                            <Input id="nome" value={formData.nome} onChange={handleInputChange} placeholder="Ex: Troca de Óleo" className={errors.nome ? "border-red-500" : ""} />
+                            <Input id="nome" name="nome" value={formData.nome} onChange={handleInputChange} placeholder="Ex: Troca de Óleo" className={errors.nome ? "border-red-500" : ""} />
                             {errors.nome && <FormError message={errors.nome} />}
                         </div>
                         <div className="grid gap-2">
@@ -146,13 +166,13 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="tempo_estimado">Tempo Estimado (horas)</Label>
-                        <Input id="tempo_estimado" type="number" step="0.5" value={formData.tempo_estimado} onChange={handleInputChange} placeholder="Ex: 1.5" />
+                        <Label htmlFor="tempoEstimadoHoras">Tempo Estimado (horas)</Label>
+                        <Input id="tempoEstimadoHoras" name="tempoEstimadoHoras" type="number" step="0.5" value={formData.tempoEstimadoHoras} onChange={handleInputChange} placeholder="Ex: 1.5" />
                     </div>
 
                     <div className="grid gap-2">
                         <Label htmlFor="descricao">Descrição Padrão *</Label>
-                        <Textarea id="descricao" value={formData.descricao} onChange={handleInputChange} placeholder="Descreva o procedimento detalhadamente..." className={`h-24 ${errors.descricao ? "border-red-500" : ""}`} />
+                        <Textarea id="descricao" name="descricao" value={formData.descricao} onChange={handleInputChange} placeholder="Descreva o procedimento detalhadamente..." className={`h-24 ${errors.descricao ? "border-red-500" : ""}`} />
                         {errors.descricao && <FormError message={errors.descricao} />}
                     </div>
 
@@ -162,9 +182,9 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
                             <Input id="checklistItem" value={checklistItem} onChange={(e) => setChecklistItem(e.target.value)} placeholder="Adicionar item ao checklist..." onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addChecklistItem())} />
                             <Button type="button" onClick={addChecklistItem} variant="outline" size="icon"><Plus className="w-4 h-4" /></Button>
                         </div>
-                        {formData.checklist?.length > 0 && (
+                        {formData.checklistJson && Array.isArray(JSON.parse(formData.checklistJson)) && JSON.parse(formData.checklistJson).length > 0 && (
                             <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-2 bg-slate-50">
-                                {formData.checklist.map((item, index) => (
+                                {JSON.parse(formData.checklistJson).map((item, index) => (
                                     <div key={index} className="flex items-center justify-between p-2 rounded-md bg-white shadow-sm text-sm">
                                         <span>{item.item}</span>
                                         <Button type="button" variant="ghost" size="sm" onClick={() => removeChecklistItem(index)} className="text-red-500 hover:text-red-700"><X className="w-4 h-4" /></Button>

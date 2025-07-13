@@ -40,7 +40,9 @@ export const createMensagem = async (req, res) => {
         nome,
         template,
         categoria,
-        oficinaId, // Adicionado oficinaId
+        oficina: {
+          connect: { id: oficinaId },
+        },
       },
     });
     res.status(201).json(newMensagem);

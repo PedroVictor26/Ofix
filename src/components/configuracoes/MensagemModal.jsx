@@ -25,7 +25,7 @@ const FormError = ({ message }) => (
 export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) {
     const [formData, setFormData] = useState({
         nome: '',
-        texto: '',
+        template: '',
         categoria: 'status_update',
     });
     const [errors, setErrors] = useState({});
@@ -35,7 +35,7 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
         if (isOpen) {
             setFormData({
                 nome: mensagem?.nome || '',
-                texto: mensagem?.texto || '',
+                template: mensagem?.template || '',
                 categoria: mensagem?.categoria || 'status_update',
             });
             setErrors({});
@@ -55,7 +55,7 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
     const validateForm = () => {
         const newErrors = {};
         if (!formData.nome?.trim()) newErrors.nome = "O nome da mensagem é obrigatório.";
-        if (!formData.texto?.trim()) newErrors.texto = "O texto da mensagem é obrigatório.";
+        if (!formData.template?.trim()) newErrors.template = "O texto da mensagem é obrigatório.";
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -107,10 +107,10 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
 
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        const text = formData.texto || '';
+        const text = formData.template || '';
         const newText = text.substring(0, start) + variavel + text.substring(end);
 
-        setFormData(prev => ({ ...prev, texto: newText }));
+        setFormData(prev => ({ ...prev, template: newText }));
 
         // Foca e posiciona o cursor após a variável inserida
         setTimeout(() => {
@@ -151,8 +151,8 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
 
                     <div className="grid gap-2">
                         <Label htmlFor="texto">Texto da Mensagem *</Label>
-                        <Textarea id="texto" value={formData.texto || ''} onChange={handleInputChange} placeholder="Olá {cliente_nome}, seu veículo {veiculo_modelo} está pronto..." className={`h-32 ${errors.texto ? "border-red-500" : ""}`} />
-                        {errors.texto && <FormError message={errors.texto} />}
+                        <Textarea id="texto" value={formData.template || ''} onChange={handleInputChange} placeholder="Olá {cliente_nome}, seu veículo {veiculo_modelo} está pronto..." className={`h-32 ${errors.template ? "border-red-500" : ""}`} />
+                        {errors.template && <FormError message={errors.template} />}
                     </div>
 
                     <div className="grid gap-2">
@@ -169,7 +169,8 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
                     <div className="bg-blue-50 p-4 rounded-lg text-blue-900">
                         <h4 className="font-semibold mb-2">Preview da Mensagem:</h4>
                         <p className="text-sm">
-                            {(formData.texto || '')
+                            <p className="text-sm">
+                            {(formData.template || '')
                                 .replace(/{cliente_nome}/g, 'João Silva')
                                 .replace(/{veiculo_modelo}/g, 'Honda Civic')
                                 .replace(/{veiculo_placa}/g, 'ABC-1234')
@@ -178,6 +179,7 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
                                 .replace(/{valor_total}/g, 'R$ 350,00')
                                 .replace(/{status_servico}/g, 'Em Andamento')
                             }
+                        </p>
                         </p>
                     </div>
                 </form>

@@ -252,8 +252,7 @@ class ServicosController {
         where: { id, oficinaId },
       });
       res.status(204).send(); // Sucesso sem conteúdo
-    } catch (error)
-    {
+    } catch (error) {
       if (error.code === 'P2025') { // Tentativa de deletar um registro que não existe
         return res.status(404).json({ error: 'Serviço não encontrado para exclusão.' });
       }
