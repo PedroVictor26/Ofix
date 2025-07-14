@@ -90,7 +90,7 @@ export default function PecaModal({ isOpen, onClose, peca, fornecedores, onSucce
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-white sm:max-w-2xl">
+            <DialogContent className="bg-white sm:max-w-2xl" aria-describedby="peca-modal-description">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-slate-800">
                         {peca ? 'Editar Peça' : 'Nova Peça no Estoque'}

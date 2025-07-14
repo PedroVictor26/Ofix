@@ -104,7 +104,7 @@ export default function FinanceiroModal({ isOpen, onClose, transacao, onSuccess 
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-white sm:max-w-lg">
+            <DialogContent className="bg-white sm:max-w-lg" aria-describedby="financeiro-modal-description">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-slate-800">
                         {transacao ? 'Editar Transação' : 'Nova Transação'}

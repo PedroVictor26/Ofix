@@ -1,12 +1,24 @@
 import apiClient from './api';
 
-export const getAllClientes = async () => {
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000;
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+export const getAllClientes = async (retryCount = 0) => {
   try {
     const response = await apiClient.get('/clientes');
     return response.data;
   } catch (error) {
-    console.error("Erro ao buscar clientes:", error.response?.data?.error || error.message);
-    throw error.response?.data || { message: error.message || "Erro desconhecido ao buscar clientes." };
+    console.log('Erro ao buscar clientes:', error.response?.data || error.message);
+    
+    if (retryCount < MAX_RETRIES && error.response?.status === 500) {
+      console.log(`Tentativa ${retryCount + 1} de ${MAX_RETRIES} em ${RETRY_DELAY}ms...`);
+      await sleep(RETRY_DELAY);
+      return getAllClientes(retryCount + 1);
+    }
+    
+    throw error;
   }
 };
 

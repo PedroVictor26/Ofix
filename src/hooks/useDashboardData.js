@@ -1,4 +1,3 @@
-// src/hooks/useDashboardData.js
 import { useEffect, useState, useCallback } from "react";
 import * as servicosService from '../services/servicos.service.js';
 import { getAllClientes, getAllVeiculos } from '../services/clientes.service.js'; // Importar getAllVeiculos
@@ -15,25 +14,40 @@ export default function useDashboardData() {
         setIsLoading(true);
         setError(null);
         try {
-            const [apiServicos, apiClientes, apiVeiculos] = await Promise.all([
+            const [servicosResult, clientesResult, veiculosResult] = await Promise.allSettled([
                 servicosService.getAllServicos(),
                 getAllClientes(),
                 getAllVeiculos() // Buscar todos os veículos
             ]);
 
-            setServicos(apiServicos || []);
+            if (servicosResult.status === 'fulfilled') {
+                setServicos(servicosResult.value || []);
+            } else {
+                console.error('Erro ao carregar serviços:', servicosResult.reason);
+                toast.error("Falha ao carregar serviços.");
+            }
 
-            const clientesMap = apiClientes.reduce((acc, cliente) => {
-                acc[cliente.id] = cliente;
-                return acc;
-            }, {});
-            setClientes(clientesMap);
+            if (clientesResult.status === 'fulfilled') {
+                const clientesMap = clientesResult.value.reduce((acc, cliente) => {
+                    acc[cliente.id] = cliente;
+                    return acc;
+                }, {});
+                setClientes(clientesMap);
+            } else {
+                console.error('Erro ao carregar clientes:', clientesResult.reason);
+                toast.error("Falha ao carregar clientes.");
+            }
 
-            const veiculosMap = apiVeiculos.reduce((acc, veiculo) => {
-                acc[veiculo.id] = veiculo;
-                return acc;
-            }, {});
-            setVeiculos(veiculosMap);
+            if (veiculosResult.status === 'fulfilled') {
+                const veiculosMap = veiculosResult.value.reduce((acc, veiculo) => {
+                    acc[veiculo.id] = veiculo;
+                    return acc;
+                }, {});
+                setVeiculos(veiculosMap);
+            } else {
+                console.error('Erro ao carregar veículos:', veiculosResult.reason);
+                toast.error("Falha ao carregar veículos.");
+            }
 
         } catch (err) {
             console.error("Erro ao carregar dados do dashboard:", err);

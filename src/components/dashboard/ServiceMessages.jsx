@@ -134,7 +134,7 @@ export default function ServiceMessages({ service, cliente, veiculo, mensagens }
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => copyToClipboard(mensagem.texto_mensagem)}
+                                    onClick={() => copyToClipboard(mensagem.template)}
                                     className="flex items-center gap-2"
                                 >
                                     <Copy className="w-4 h-4" />

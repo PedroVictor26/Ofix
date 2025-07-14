@@ -137,7 +137,7 @@ export default function ProcedimentoModal({ isOpen, onClose, procedimento, onSuc
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-white sm:max-w-2xl">
+            <DialogContent className="bg-white sm:max-w-2xl" aria-describedby="procedimento-modal-description">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-slate-800">
                         {procedimento ? 'Editar Procedimento' : 'Novo Procedimento Padrão'}

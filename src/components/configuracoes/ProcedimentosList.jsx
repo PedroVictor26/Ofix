@@ -76,13 +76,13 @@ export default function ProcedimentosList({ procedimentos, onEdit, isLoading }) 
                                         {procedimento.descricao}
                                     </p>
                                     <div className="flex items-center gap-4 text-xs text-slate-500 mt-2">
-                                        {procedimento.tempo_estimado > 0 && (
+                                        {procedimento.tempoEstimadoHoras && parseFloat(procedimento.tempoEstimadoHoras) > 0 && (
                                             <div className="flex items-center gap-1">
                                                 <Clock className="w-3 h-3" />
-                                                <span>{procedimento.tempo_estimado}h</span>
+                                                <span>{parseFloat(procedimento.tempoEstimadoHoras)}h</span>
                                             </div>
                                         )}
-                                        {procedimento.checklist?.length > 0 && (
+                                        {procedimento.checklistJson && JSON.parse(procedimento.checklistJson).length > 0 && (
                                             <div className="flex items-center gap-1">
                                                 <CheckSquare className="w-3 h-3" />
                                                 <span>{procedimento.checklist.length} itens</span>

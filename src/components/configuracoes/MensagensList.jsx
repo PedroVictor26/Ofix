@@ -72,7 +72,7 @@ export default function MensagensList({ mensagens, onEdit, isLoading }) {
                                         {mensagem.nome}
                                     </h3>
                                     <p className="text-sm text-slate-600 mt-1 line-clamp-2">
-                                        {mensagem.texto}
+                                        {mensagem.template}
                                     </p>
                                     {mensagem.variaveis_disponiveis?.length > 0 && (
                                         <div className="flex items-center gap-1 text-xs text-slate-500 mt-2">

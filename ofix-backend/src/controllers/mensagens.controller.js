@@ -57,13 +57,28 @@ export const updateMensagem = async (req, res) => {
   const { nome, template, categoria } = req.body;
   const oficinaId = req.user?.oficinaId;
 
+  console.log('ID da mensagem a ser atualizada:', id);
+  console.log('oficinaId do usuário autenticado:', oficinaId);
+
   if (!oficinaId) {
     return res.status(400).json({ error: 'Usuário não está associado a uma oficina.' });
   }
 
   try {
+    const existingMensagem = await prisma.mensagemPadrao.findUnique({
+      where: { id },
+    });
+
+    if (!existingMensagem) {
+      return res.status(404).json({ error: "Mensagem não encontrada." });
+    }
+
+    if (existingMensagem.oficinaId !== oficinaId) {
+      return res.status(403).json({ error: "Você não tem permissão para atualizar esta mensagem." });
+    }
+
     const updatedMensagem = await prisma.mensagemPadrao.update({
-      where: { id, oficinaId }, // Adicionado oficinaId ao where
+      where: { id },
       data: {
         nome,
         template,

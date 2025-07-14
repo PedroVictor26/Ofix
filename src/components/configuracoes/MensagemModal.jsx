@@ -1,5 +1,5 @@
 import { createMensagem, updateMensagem } from "@/services/mensagens.service";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -30,6 +30,7 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
     });
     const [errors, setErrors] = useState({});
     const [isSaving, setIsSaving] = useState(false);
+    const textareaRef = useRef(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -43,9 +44,9 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
     }, [isOpen, mensagem]);
 
     const handleInputChange = (e) => {
-        const { id, value } = e.target;
-        setFormData(prev => ({ ...prev, [id]: value }));
-        if (errors[id]) setErrors(prev => ({ ...prev, [id]: null }));
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
     };
 
     const handleSelectChange = (value) => {
@@ -74,8 +75,7 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
             onSuccess();
             onClose();
         } catch (error) {
-            console.error("Erro ao salvar mensagem:", error);
-            setErrors({ form: error.message || "Erro ao salvar mensagem." });
+            setErrors({ form: error?.response?.data?.error || error.message || "Erro ao salvar mensagem." });
         } finally {
             setIsSaving(false);
         }
@@ -102,7 +102,7 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
     ];
 
     const inserirVariavel = (variavel) => {
-        const textarea = document.getElementById('texto'); // ID do textarea
+        const textarea = textareaRef.current;
         if (!textarea) return;
 
         const start = textarea.selectionStart;
@@ -112,7 +112,6 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
 
         setFormData(prev => ({ ...prev, template: newText }));
 
-        // Foca e posiciona o cursor após a variável inserida
         setTimeout(() => {
             textarea.focus();
             textarea.setSelectionRange(start + variavel.length, start + variavel.length);
@@ -121,7 +120,7 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-white sm:max-w-2xl">
+            <DialogContent className="bg-white sm:max-w-2xl" aria-describedby="mensagem-modal-description">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-slate-800">
                         {mensagem ? 'Editar Mensagem' : 'Nova Mensagem Padrão'}
@@ -135,13 +134,15 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
                     <div className="grid sm:grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label htmlFor="nome">Nome da Mensagem *</Label>
-                            <Input id="nome" value={formData.nome || ''} onChange={handleInputChange} placeholder="Ex: Serviço Concluído" className={errors.nome ? "border-red-500" : ""} />
+                            <Input id="nome" name="nome" value={formData.nome} onChange={handleInputChange} placeholder="Ex: Serviço Concluído" className={errors.nome ? "border-red-500" : ""} />
                             {errors.nome && <FormError message={errors.nome} />}
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="categoria">Categoria</Label>
-                            <Select value={formData.categoria || ''} onValueChange={handleSelectChange}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
+                            <Select value={formData.categoria} onValueChange={handleSelectChange}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecione uma categoria..." />
+                                </SelectTrigger>
                                 <SelectContent>
                                     {categorias.map(cat => <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>)}
                                 </SelectContent>
@@ -150,8 +151,16 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="texto">Texto da Mensagem *</Label>
-                        <Textarea id="texto" value={formData.template || ''} onChange={handleInputChange} placeholder="Olá {cliente_nome}, seu veículo {veiculo_modelo} está pronto..." className={`h-32 ${errors.template ? "border-red-500" : ""}`} />
+                        <Label htmlFor="template">Texto da Mensagem *</Label>
+                        <Textarea
+                            id="template"
+                            name="template"
+                            ref={textareaRef}
+                            value={formData.template}
+                            onChange={handleInputChange}
+                            placeholder="Olá {cliente_nome}, seu veículo {veiculo_modelo} está pronto..."
+                            className={`h-32 ${errors.template ? "border-red-500" : ""}`}
+                        />
                         {errors.template && <FormError message={errors.template} />}
                     </div>
 
@@ -168,8 +177,7 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
 
                     <div className="bg-blue-50 p-4 rounded-lg text-blue-900">
                         <h4 className="font-semibold mb-2">Preview da Mensagem:</h4>
-                        <p className="text-sm">
-                            <p className="text-sm">
+                        <div className="text-sm whitespace-pre-line">
                             {(formData.template || '')
                                 .replace(/{cliente_nome}/g, 'João Silva')
                                 .replace(/{veiculo_modelo}/g, 'Honda Civic')
@@ -179,17 +187,17 @@ export default function MensagemModal({ isOpen, onClose, mensagem, onSuccess }) 
                                 .replace(/{valor_total}/g, 'R$ 350,00')
                                 .replace(/{status_servico}/g, 'Em Andamento')
                             }
-                        </p>
-                        </p>
+                        </div>
+                        {errors.form && <FormError message={errors.form} />}
                     </div>
-                </form>
 
-                <DialogFooter>
-                    <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>Cancelar</Button>
-                    <Button type="submit" onClick={handleSubmit} disabled={isSaving}>
-                        {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4 mr-2" /> Salvar</>}
-                    </Button>
-                </DialogFooter>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>Cancelar</Button>
+                        <Button type="submit" disabled={isSaving}>
+                            {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4 mr-2" /> Salvar</>}
+                        </Button>
+                    </DialogFooter>
+                </form>
             </DialogContent>
         </Dialog>
     );

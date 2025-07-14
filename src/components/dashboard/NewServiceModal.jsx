@@ -83,7 +83,7 @@ export default function NewServiceModal({ isOpen, onClose, onSuccess: reloadDash
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-white text-black dark:bg-white dark:text-black p-6 rounded-xl shadow-xl max-w-3xl">
+            <DialogContent className="bg-white text-black dark:bg-white dark:text-black p-6 rounded-xl shadow-xl max-w-3xl" aria-describedby="new-service-modal-description">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                         <Plus className="w-6 h-6" />

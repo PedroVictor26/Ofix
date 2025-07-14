@@ -6,6 +6,20 @@ const prisma = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
 });
 
+// Middleware para reconectar em caso de erro
+prisma.$use(async (params, next) => {
+  try {
+    return await next(params)
+  } catch (error) {
+    if (error.code === 'P2024' || error.code === 'P2021') { // Timeout or table does not exist
+      await prisma.$disconnect()
+      await prisma.$connect()
+      return await next(params)
+    }
+    throw error
+  }
+})
+
 // Hook para fechar a conexão Prisma quando a aplicação encerrar (opcional, mas boa prática)
 async function gracefulShutdown(signal) {
   console.log(`*${signal} recebido, fechando conexão Prisma...`);
